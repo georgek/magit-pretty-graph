@@ -1,5 +1,7 @@
+;; (defvar magit-pretty-graph-command
+;;   "git --no-pager log --pretty=format:\"%h %H %P\" -n 20")
 (defvar magit-pretty-graph-command
-  "git log --date-order --pretty=format:\"%h %H %P\" -n 20")
+  "git --no-pager log --pretty=format:\"%H%x00%P%x00%h%x00%an%x00%ar%x00%s\" -n 20")
 
 (defvar magit-graph-head "┍")
 (defvar magit-graph-node "┝")
@@ -13,6 +15,18 @@
 (defvar magit-graph-in "╯")
 (defvar magit-graph-trunkmerge "╰")
 (defvar magit-prettier-graph-buffer-name "*magit-prettier-graph*")
+(defvar magit-prettier-graph-output-buffer-name "*magit-prettier-graph-output*")
+
+(defun magit-prettier-graph-repo (directory)
+  (with-current-buffer (get-buffer-create
+                        magit-prettier-graph-output-buffer-name)
+    (erase-buffer)
+    (cd directory)
+    (call-process-shell-command
+     magit-pretty-graph-command
+     nil
+     magit-prettier-graph-output-buffer-name))
+  (magit-prettier-graph magit-prettier-graph-output-buffer-name))
 
 (defun magit-parse-hash (hash-str)
   (let (hash)
@@ -23,25 +37,46 @@
     hash))
 
 (defun magit-prettier-graph-hash (commit)
-  (second commit))
+  (cadr commit))
 
 (defun magit-prettier-graph-parents (commit)
   (cddr commit))
 
 (defun magit-prettier-graph-shorthash (commit)
-  (first commit))
+  (first (car commit)))
+
+(defun magit-prettier-graph-author (commit)
+  (second (car commit)))
+
+(defun magit-prettier-graph-date (commit)
+  (third (car commit)))
+
+(defun magit-prettier-graph-message (commit)
+  (fourth (car commit)))
+
+(defun magit-prettier-graph-commit-string (commit)
+  (concat
+   (magit-prettier-graph-shorthash commit)
+   " ("
+   (magit-prettier-graph-author commit)
+   " - "
+   (magit-prettier-graph-date commit)
+   ") "
+   (magit-prettier-graph-message commit)))
 
 (defun magit-prettier-graph-parse-output (buffer)
   (with-current-buffer buffer
-    (mapcar
-     #'(lambda (line)
-         (setq line (split-string line " "))
-         (setcdr line (mapcar
-                       #'(lambda (hash-str)
-                           (setq hash-str (magit-parse-hash hash-str)))
-                       (cdr line)))
-         line)
-     (split-string (buffer-string) "\n" t))))
+    (let ((commits (mapcar
+                    #'(lambda (line)
+                        (split-string line "\0" t))
+                    (split-string (buffer-string) "\n" t))))
+      (setq commits
+            (mapcar
+             #'(lambda (commit)
+                 (setq commit (cons (cddr commit) commit))
+                 (setcdr (cdr commit) (split-string (caddr commit) " " t))
+                 commit)
+             commits)))))
 
 (defun magit-prettier-graph (buffer)
   ;; TODO parse hashes into lists of ints to save string comparisons (split
@@ -56,6 +91,7 @@
       (with-current-buffer (get-buffer-create magit-prettier-graph-buffer-name)
         (setq mode-name "Magit Log")
         (erase-buffer)
+        (toggle-truncate-lines 1)
        
         (dolist (commit commits)
           (setq this-trunk (position 
@@ -80,7 +116,7 @@
               (insert magit-graph-down " "))
              (t
               (insert "  "))))
-          (insert (magit-prettier-graph-shorthash commit) "\n")
+          (insert (magit-prettier-graph-commit-string commit) "\n")
           ;; prepare parents
           (let ((parents (magit-prettier-graph-parents commit))
                 (trunk-branches (list)))
