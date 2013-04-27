@@ -31,26 +31,25 @@
 (defun magit-prettier-graph-shorthash (commit)
   (first commit))
 
+(defun magit-prettier-graph-parse-output (buffer)
+  (with-current-buffer buffer
+    (mapcar
+     #'(lambda (line)
+         (setq line (split-string line " "))
+         (setcdr line (mapcar
+                       #'(lambda (hash-str)
+                           (setq hash-str (magit-parse-hash hash-str)))
+                       (cdr line)))
+         line)
+     (split-string (buffer-string) "\n" t))))
+
 (defun magit-prettier-graph (buffer)
   ;; TODO parse hashes into lists of ints to save string comparisons (split
   ;; strings into 4 lengths of 10 chars to parse)
-  (let ((commits (list))
+  (let ((commits (magit-prettier-graph-parse-output buffer))
         (trunks (list)))                ; this holds the hashes of the next
                                         ; node on each trunk (nil if trunk is
                                         ; unused)
-    (with-current-buffer buffer
-      (setq commits (split-string (buffer-string) "\n" t))
-      (setq commits
-            (mapcar
-             #'(lambda (line)
-                 (setq line (split-string line " "))
-                 (setcdr line (mapcar
-                               #'(lambda (hash-str)
-                                   (setq hash-str (magit-parse-hash hash-str)))
-                               (cdr line)))
-                 line)
-             commits)))
-    
     ;; print graph
     (let ((this-trunk nil)
           (head nil))
