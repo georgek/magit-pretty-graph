@@ -22,16 +22,25 @@
             hash))
     hash))
 
+(defun magit-prettier-graph-hash (commit)
+  (second commit))
+
+(defun magit-prettier-graph-parents (commit)
+  (cddr commit))
+
+(defun magit-prettier-graph-shorthash (commit)
+  (first commit))
+
 (defun magit-prettier-graph (buffer)
   ;; TODO parse hashes into lists of ints to save string comparisons (split
   ;; strings into 4 lengths of 10 chars to parse)
-  (let ((hashes (list))
+  (let ((commits (list))
         (trunks (list)))                ; this holds the hashes of the next
                                         ; node on each trunk (nil if trunk is
                                         ; unused)
     (with-current-buffer buffer
-      (setq hashes (split-string (buffer-string) "\n" t))
-      (setq hashes
+      (setq commits (split-string (buffer-string) "\n" t))
+      (setq commits
             (mapcar
              #'(lambda (line)
                  (setq line (split-string line " "))
@@ -40,7 +49,7 @@
                                    (setq hash-str (magit-parse-hash hash-str)))
                                (cdr line)))
                  line)
-             hashes)))
+             commits)))
     
     ;; print graph
     (let ((this-trunk nil)
@@ -49,19 +58,22 @@
         (setq mode-name "Magit Log")
         (erase-buffer)
        
-        (dolist (hash hashes)
-          (setq this-trunk (position (second hash) trunks :test #'equal))
+        (dolist (commit commits)
+          (setq this-trunk (position 
+                            (magit-prettier-graph-hash commit)
+                            trunks :test #'equal))
           (setq head nil)
           (when (not this-trunk)
             ;; new head
             (setq head t)
             (setq this-trunk (or (position nil trunks) (length trunks)))
             (when (>= this-trunk (length trunks))
-              (setq trunks (append trunks (list (second hash))))))
+              (setq trunks (append trunks 
+                                   (list (magit-prettier-graph-hash commit))))))
           ;; print trunks
           (dolist (trunk trunks)
             (cond
-             ((equal trunk (second hash))
+             ((equal trunk (magit-prettier-graph-hash commit))
               (if head
                   (insert magit-graph-head " ")
                 (insert magit-graph-node " ")))
@@ -69,9 +81,9 @@
               (insert magit-graph-down " "))
              (t
               (insert "  "))))
-          (insert (first hash) "\n")
+          (insert (magit-prettier-graph-shorthash commit) "\n")
           ;; prepare parents
-          (let ((parents (cddr hash))
+          (let ((parents (magit-prettier-graph-parents commit))
                 (trunk-branches (list)))
             (setf (nth this-trunk trunks) (first parents))
             (setq parents (rest parents))
@@ -94,7 +106,7 @@
                     (l (car (last parents))))
                 (dolist (trunk trunks)
                   (cond
-                   ((equal trunk (third hash))
+                   ((equal trunk (first (magit-prettier-graph-parents commit)))
                     (setq str magit-graph-across)
                     (insert magit-graph-branch str))
                    (trunk
