@@ -138,12 +138,18 @@
                 (when (consp p)
                   (setq trunks (append trunks p))))
               (let ((str " ")
-                    (l (car (last parents))))
+                    (l (car (last parents)))
+                    (f nil))
                 (dolist (trunk trunks)
                   (cond
                    ((equal trunk (first (magit-prettier-graph-parents commit)))
-                    (setq str magit-graph-across)
-                    (insert magit-graph-branch str))
+                    ;; only merge into first trunk, any others are branches
+                    ;; which will be dealt with next
+                    (if f
+                        (insert magit-graph-down str)
+                      (setq f t)
+                      (setq str magit-graph-across)
+                      (insert magit-graph-branch str)))
                    (trunk
                     (if (member trunk parents)
                         (if (not (equal trunk l))
