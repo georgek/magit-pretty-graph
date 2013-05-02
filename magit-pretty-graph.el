@@ -222,5 +222,3 @@
        (while (consp ,(first spec))
          ,@body
          (setq ,(first spec) (rest ,(first spec)))))))
-
-(magit-prettier-graph "testlog2")
