@@ -268,7 +268,11 @@
           (setcdr last nil))))))
 
 (defmacro dolistc (spec &rest body)
-  "Like dolist but VAR is bound to the cons instead of the car."
+  "Loop over a list.
+Evaluate BODY with VAR bound to each cons from LIST, in turn.
+An implicit nil block is established around the loop.
+
+\(fn (VAR LIST) BODY...)"
   (declare (indent 1))
   `(cl-block nil
      (let ((,(first spec) ,(second spec)))
