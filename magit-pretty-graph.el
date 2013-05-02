@@ -16,6 +16,7 @@
 (defvar magit-graph-out "╮")
 (defvar magit-graph-in "╯")
 (defvar magit-graph-trunkmerge "╰")
+(defvar magit-graph-topleft "╭")
 (defvar magit-pg-buffer-name "*magit-prettier-graph*")
 (defvar magit-pg-output-buffer-name "*magit-prettier-graph-output*")
 
@@ -113,6 +114,103 @@
     (insert (magit-pg-commit-string commit) "\n")
     trunks))
 
+(defun magit-pg-print-merge (trunks commit parents)
+  "Prints a merge (if there is one) and returns new trunks (destructively)."
+  (let (merge
+        (trunk-merges (list)))
+    (dolistc (trunkc trunks)
+      (when (equal (car trunkc) (magit-pg-hash commit))
+        (setcar trunkc (pop parents))
+        (setq merge (car trunkc))
+        (return)))
+
+    (when (consp parents)
+      ;; deal with merge
+      (let ((new-parents (set-difference parents trunks :test #'equal))
+            (last-parent)
+            (first-parent))
+        ;; fill in nils and find rightmost parent
+        (dolistc (trunkc trunks)
+          (cond
+           ((eq (car trunkc) merge)
+            (or first-parent (setq first-parent (car trunkc)))
+            (setq last-parent (car trunkc)))
+           ((and (null (car trunkc)) (consp new-parents))
+            (setcar trunkc (pop new-parents))
+            (or first-parent (setq first-parent (car trunkc)))
+            (setq last-parent (car trunkc)))
+           ((member (car trunkc) parents)
+            (push (car trunkc) trunk-merges)
+            (or first-parent (setq first-parent (car trunkc)))
+            (setq last-parent (car trunkc)))))
+        (when (consp new-parents)
+          (setq last-parent (car (last new-parents)))
+          (setq trunks (nconc trunks new-parents)))
+        ;; draw merge
+        (let ((str " ")
+              (before-merge t))
+          (dolist (trunk trunks)
+            (cond
+             ((eq first-parent trunk)
+              (setq str magit-graph-across)
+              (cond
+               ((and before-merge (eq merge trunk))
+                (setq before-merge nil)
+                (insert magit-graph-branchright str))
+               ((memq trunk trunk-merges)
+                (insert magit-graph-down magit-graph-topleft))
+               (t
+                (insert magit-graph-topleft str))))
+
+             ((eq last-parent trunk)
+              (setq str " ")
+              (cond
+               ((and before-merge (eq merge trunk))
+                (setq before-merge nil)
+                (insert magit-graph-branchleft str))
+               ((memq trunk trunk-merges)
+                (delete-char -1)
+                (insert magit-graph-out magit-graph-down str))
+               (t
+                (insert magit-graph-out str))))
+
+             (t
+              (cond
+               ((and before-merge (eq merge trunk))
+                (setq before-merge nil)
+                (insert magit-graph-cross str))
+               ((memq trunk trunk-merges)
+                (if before-merge
+                    (insert magit-graph-down magit-graph-branchdown)
+                  (delete-char -1)
+                  (insert magit-graph-branchdown magit-graph-down str)))
+               (trunk
+                (insert magit-graph-down str))
+               (t
+                (insert str str))))))
+          (insert "\n")
+          ;; draw rest of trunk merges
+          (setq str " ")
+          (setq before-merge t)
+          (when (consp trunk-merges)
+            (dolist (trunk trunks)
+              (cond
+               ((and before-merge (eq merge trunk))
+                (setq before-merge nil)
+                (insert magit-graph-down str))
+               ((memq trunk trunk-merges)
+                (if before-merge
+                    (insert magit-graph-branchright magit-graph-in)
+                  (delete-char -1)
+                  (insert magit-graph-trunkmerge magit-graph-branchleft str)))
+               (trunk
+                (insert magit-graph-down str))
+               (t
+                (insert str str))))
+            (insert "\n")))))
+
+    trunks))
+
 (defun magit-pg (buffer)
   ;; TODO parse hashes into lists of ints to save string comparisons (split
   ;; strings into 4 lengths of 10 chars to parse)
@@ -129,75 +227,10 @@
       (dolist (commit commits)
         ;; print commit
         (setq trunks (magit-pg-print-commit trunks commit))
-        ;; prepare parents
-        (let ((parents (magit-pg-parents commit))
-              (trunk-branches (list)))
-          (setf (nth
-                 (position (magit-pg-hash commit) trunks :test #'equal)
-                 trunks) (first parents))
-          (setq parents (rest parents))
-          (when (consp parents)
-            ;; merge
-            (let ((p parents))
-              (dolistc (trunkc trunks)
-                (while (and (consp p)
-                            (member (first p) trunks))
-                  (push (first p) trunk-branches)
-                  (setq p (rest p)))
-                (when (null p)
-                  (return))
-                (when (null (car trunkc))
-                  (setcar trunkc (first p))
-                  (setq p (rest p))))
-              (when (consp p)
-                (setq trunks (append trunks p))))
-            (let ((str " ")
-                  (f t)
-                  (l (car (last parents)))
-                  (b nil))
-              (dolist (trunk trunks)
-                (cond
-                 ((equal trunk (first (magit-pg-parents commit)))
-                  ;; only merge into first trunk, any others are branches
-                  ;; which will be dealt with next
-                  (if b
-                      (insert magit-graph-down str)
-                    (setq b t)
-                    (if (null l)      ; no more branches to the right
-                        (insert magit-graph-down str)
-                      (setq str magit-graph-across)
-                      (insert magit-graph-branch str))))
-                 (trunk
-                  (if (member trunk parents)
-                      (if (not (equal trunk l))
-                          (if (not (member trunk trunk-branches))
-                              (insert magit-graph-branchdown str)
-                            (delete-char -1)
-                            (insert magit-graph-branchdown
-                                    magit-graph-down str))
-                        (setq str " ")
-                        (setq l nil)  ; record that last one has been done
-                        (if (not (member trunk trunk-branches))
-                            (insert magit-graph-out str)
-                          (delete-char -1)
-                          (insert magit-graph-out
-                                  magit-graph-down str)))
-                    (insert magit-graph-down str)))
-                 (t
-                  (insert str str)))))
-            (insert "\n")
-            (when (consp trunk-branches)
-              (dolist (trunk trunks)
-                (cond
-                 ((member trunk trunk-branches)
-                  (delete-char -1)
-                  (insert magit-graph-trunkmerge magit-graph-branchin " "))
-                 (trunk
-                  (insert magit-graph-down " "))
-                 (t
-                  (insert "  "))))
-              (insert "\n"))))
-        ;; find branches
+        ;; print merge and prepare parents
+        (setq trunks (magit-pg-print-merge
+                      trunks commit (magit-pg-parents commit)))
+        ;; print branches
         (let ((l nil))
           (dolistc (trunkc trunks)
             ;; find last element with same hash
