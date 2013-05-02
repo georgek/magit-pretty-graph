@@ -68,6 +68,8 @@
 
 (defun magit-pg-parse-output (buffer)
   (with-current-buffer buffer
+    (when (string= (substring (buffer-string) 0 5) "fatal")
+      (error "Git error, see output buffer for details"))
     (let ((commits (mapcar
                     #'(lambda (line)
                         (split-string line "\0" nil))
