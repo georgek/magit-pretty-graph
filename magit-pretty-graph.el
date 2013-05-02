@@ -212,8 +212,6 @@
     trunks))
 
 (defun magit-pg (buffer)
-  ;; TODO parse hashes into lists of ints to save string comparisons (split
-  ;; strings into 4 lengths of 10 chars to parse)
   (let ((commits (magit-pg-parse-output buffer))
         (trunks (list)))                ; this holds the hashes of the next
                                         ; node on each trunk (nil if trunk is
