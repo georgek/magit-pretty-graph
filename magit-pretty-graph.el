@@ -211,6 +211,36 @@
 
     trunks))
 
+(defun magit-pg-print-branches (trunks)
+  (let ((l nil))
+    (dolistc (trunkc trunks)
+      ;; find last element with same hash
+      (unless (null (car trunkc))
+        (dolistc (otrunkc (rest trunkc))
+          (when (equal (car trunkc) (car otrunkc))
+            (setq l otrunkc)
+            (setcar otrunkc 'same)))
+        (when l                         ; branch
+          (let ((str " "))
+            (dolistc (otrunkc trunks)
+              (cond
+               ((equal (car otrunkc) (car trunkc))
+                (setq str magit-graph-across)
+                (insert magit-graph-branchright str))
+               ((eq (car otrunkc) 'same)
+                (if (not (eq otrunkc l))
+                    (insert magit-graph-branchup str)
+                  (setq str " ")
+                  (insert magit-graph-bottomright str))
+                (setcar otrunkc nil))
+               ((car otrunkc)
+                (insert magit-graph-down str))
+               (t
+                (insert str str)))))
+          (insert "\n"))
+        (setq l nil)))
+    trunks))
+
 (defun magit-pg (buffer)
   (let ((commits (magit-pg-parse-output buffer))
         (trunks (list)))                ; this holds the hashes of the next
@@ -228,34 +258,8 @@
         ;; print merge and prepare parents
         (setq trunks (magit-pg-print-merge
                       trunks commit (magit-pg-parents commit)))
-        ;; print branches
-        (let ((l nil))
-          (dolistc (trunkc trunks)
-            ;; find last element with same hash
-            (unless (null (car trunkc))
-              (dolistc (otrunkc (rest trunkc))
-                (when (equal (car trunkc) (car otrunkc))
-                  (setq l otrunkc)
-                  (setcar otrunkc 'same)))
-              (when l                 ; branch
-                (let ((str " "))
-                  (dolistc (otrunkc trunks)
-                    (cond
-                     ((equal (car otrunkc) (car trunkc))
-                      (setq str magit-graph-across)
-                      (insert magit-graph-branchright str))
-                     ((equal (car otrunkc) 'same)
-                      (if (not (eq otrunkc l))
-                          (insert magit-graph-branchup str)
-                        (setq str " ")
-                        (insert magit-graph-bottomright str))
-                      (setcar otrunkc nil))
-                     ((car otrunkc)
-                      (insert magit-graph-down str))
-                     (t
-                      (insert str str)))))
-                (insert "\n"))
-              (setq l nil))))
+        ;; print branches and consolidate duplicate parents
+        (setq trunks (magit-pg-print-branches trunks))
         ;; remove nils at end
         (let ((last trunks))
           (dolistc (trunkc trunks)
