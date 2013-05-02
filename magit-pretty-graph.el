@@ -13,10 +13,10 @@
 (defvar magit-graph-branchdown "┬")
 (defvar magit-graph-branchup "┴")
 (defvar magit-graph-across "─")
-(defvar magit-graph-out "╮")
-(defvar magit-graph-in "╯")
-(defvar magit-graph-trunkmerge "╰")
+(defvar magit-graph-topright "╮")
+(defvar magit-graph-bottomright "╯")
 (defvar magit-graph-topleft "╭")
+(defvar magit-graph-bottomleft "╰")
 (defvar magit-pg-buffer-name "*magit-prettier-graph*")
 (defvar magit-pg-output-buffer-name "*magit-prettier-graph-output*")
 
@@ -170,9 +170,9 @@
                 (insert magit-graph-branchleft str))
                ((memq trunk trunk-merges)
                 (delete-char -1)
-                (insert magit-graph-out magit-graph-down str))
+                (insert magit-graph-topright magit-graph-down str))
                (t
-                (insert magit-graph-out str))))
+                (insert magit-graph-topright str))))
 
              (t
               (cond
@@ -200,9 +200,9 @@
                 (insert magit-graph-down str))
                ((memq trunk trunk-merges)
                 (if before-merge
-                    (insert magit-graph-branchright magit-graph-in)
+                    (insert magit-graph-branchright magit-graph-bottomright)
                   (delete-char -1)
-                  (insert magit-graph-trunkmerge magit-graph-branchleft str)))
+                  (insert magit-graph-bottomleft magit-graph-branchleft str)))
                (trunk
                 (insert magit-graph-down str))
                (t
@@ -250,7 +250,7 @@
                       (if (not (eq otrunkc l))
                           (insert magit-graph-branchup str)
                         (setq str " ")
-                        (insert magit-graph-in str))
+                        (insert magit-graph-bottomright str))
                       (setcar otrunkc nil))
                      ((car otrunkc)
                       (insert magit-graph-down str))
