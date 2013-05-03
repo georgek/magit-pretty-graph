@@ -18,6 +18,28 @@
 (defvar magit-pg-buffer-name "*magit-prettier-graph*")
 (defvar magit-pg-output-buffer-name "*magit-prettier-graph-output*")
 
+(defgroup magit-pg-faces nil
+  "Customize the appearance of Magit pretty graph."
+  :prefix "magit-pg-"
+  :group 'faces
+  :group 'magit-pg)
+
+(defface magit-pg-author
+  '((((class color) (background light))
+     :foreground "olive drab")
+    (((class color) (background dark))
+     :foreground "light green"))
+  "Face for the author element of the log output."
+  :group 'magit-pg-faces)
+
+(defface magit-pg-date
+  '((((class color) (background light))
+     :foreground "steel blue")
+    (((class color) (background dark))
+     :foreground "sky blue"))
+  "Face for the date element of the log output."
+  :group 'magit-pg-faces)
+
 (defun magit-pg-repo (directory)
   (with-current-buffer (get-buffer-create
                         magit-pg-output-buffer-name)
@@ -57,11 +79,14 @@
 
 (defun magit-pg-commit-string (commit)
   (concat
-   (magit-pg-shorthash commit)
+   (propertize (magit-pg-shorthash commit) 'face 'magit-log-sha1)
    " ("
-   (magit-pg-author commit)
-   " - "
-   (magit-pg-date commit)
+   (propertize (truncate-string-to-width
+                (magit-pg-author commit)
+                16 nil nil "...")
+               'face 'magit-pg-author)
+   " "
+   (propertize (substring (magit-pg-date commit) 0 -4) 'face 'magit-pg-date)
    ") "
    (magit-pg-message commit)))
 
