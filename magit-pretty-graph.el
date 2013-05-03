@@ -18,8 +18,8 @@
 (magit-pg-defchar magit-pg-bottomright "╯")
 (magit-pg-defchar magit-pg-topleft "╭")
 (magit-pg-defchar magit-pg-bottomleft "╰")
-(magit-pg-defchar magit-pg-buffer-name "*magit-prettier-graph*")
-(magit-pg-defchar magit-pg-output-buffer-name "*magit-prettier-graph-output*")
+(defconst magit-pg-buffer-name "*magit-prettier-graph*")
+(defconst magit-pg-output-buffer-name "*magit-prettier-graph-output*")
 
 (defgroup magit-pg-faces nil
   "Customize the appearance of Magit pretty graph."
