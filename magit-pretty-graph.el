@@ -1,22 +1,21 @@
-;; (defvar magit-pg-command
-;;   "git --no-pager log --pretty=format:\"%h %H %P\" -n 20")
 (defvar magit-pg-command
-  "git --no-pager log --topo-order --pretty=format:\"%H%x00%P%x00%h%x00%an%x00%ar%x00%s\" 5223017")
+  "git --no-pager log --topo-order --pretty=format:\"%H%x00%P%x00%h%x00%an%x00%ar%x00%s\"")
 
-(defvar magit-graph-head "┍")
-(defvar magit-graph-node "┝")
-(defvar magit-graph-tail "┕")
-(defvar magit-graph-down "│")
-(defvar magit-graph-branchright "├")
-(defvar magit-graph-branchleft "┤")
-(defvar magit-graph-branchcross "┼")
-(defvar magit-graph-branchdown "┬")
-(defvar magit-graph-branchup "┴")
-(defvar magit-graph-across "─")
-(defvar magit-graph-topright "╮")
-(defvar magit-graph-bottomright "╯")
-(defvar magit-graph-topleft "╭")
-(defvar magit-graph-bottomleft "╰")
+
+(defvar magit-pg-head "┍")
+(defvar magit-pg-node "┝")
+(defvar magit-pg-tail "┕")
+(defvar magit-pg-down "│")
+(defvar magit-pg-branchright "├")
+(defvar magit-pg-branchleft "┤")
+(defvar magit-pg-branchcross "┼")
+(defvar magit-pg-branchdown "┬")
+(defvar magit-pg-branchup "┴")
+(defvar magit-pg-across "─")
+(defvar magit-pg-topright "╮")
+(defvar magit-pg-bottomright "╯")
+(defvar magit-pg-topleft "╭")
+(defvar magit-pg-bottomleft "╰")
 (defvar magit-pg-buffer-name "*magit-prettier-graph*")
 (defvar magit-pg-output-buffer-name "*magit-prettier-graph-output*")
 
@@ -31,7 +30,7 @@
      magit-pg-output-buffer-name))
   (magit-pg magit-pg-output-buffer-name))
 
-(defun magit-parse-hash (hash-str)
+(defun magit-pg-parse-hash (hash-str)
   (let (hash)
     (dotimes (i 4)
       (push (string-to-number
@@ -102,13 +101,13 @@
        ((equal trunk (magit-pg-hash commit))
         (cond
          (head
-          (insert magit-graph-head " "))
+          (insert magit-pg-head " "))
          (tail
-          (insert magit-graph-tail " "))
+          (insert magit-pg-tail " "))
          (t
-          (insert magit-graph-node " "))))
+          (insert magit-pg-node " "))))
        (trunk
-        (insert magit-graph-down " "))
+        (insert magit-pg-down " "))
        (t
         (insert "  "))))
     (insert (magit-pg-commit-string commit) "\n")
@@ -152,40 +151,40 @@
           (dolist (trunk trunks)
             (cond
              ((eq first-parent trunk)
-              (setq str magit-graph-across)
+              (setq str magit-pg-across)
               (cond
                ((and before-merge (eq merge trunk))
                 (setq before-merge nil)
-                (insert magit-graph-branchright str))
+                (insert magit-pg-branchright str))
                ((memq trunk trunk-merges)
-                (insert magit-graph-down magit-graph-topleft))
+                (insert magit-pg-down magit-pg-topleft))
                (t
-                (insert magit-graph-topleft str))))
+                (insert magit-pg-topleft str))))
 
              ((eq last-parent trunk)
               (setq str " ")
               (cond
                ((and before-merge (eq merge trunk))
                 (setq before-merge nil)
-                (insert magit-graph-branchleft str))
+                (insert magit-pg-branchleft str))
                ((memq trunk trunk-merges)
                 (delete-char -1)
-                (insert magit-graph-topright magit-graph-down str))
+                (insert magit-pg-topright magit-pg-down str))
                (t
-                (insert magit-graph-topright str))))
+                (insert magit-pg-topright str))))
 
              (t
               (cond
                ((and before-merge (eq merge trunk))
                 (setq before-merge nil)
-                (insert magit-graph-cross str))
+                (insert magit-pg-cross str))
                ((memq trunk trunk-merges)
                 (if before-merge
-                    (insert magit-graph-down magit-graph-branchdown)
+                    (insert magit-pg-down magit-pg-branchdown)
                   (delete-char -1)
-                  (insert magit-graph-branchdown magit-graph-down str)))
+                  (insert magit-pg-branchdown magit-pg-down str)))
                (trunk
-                (insert magit-graph-down str))
+                (insert magit-pg-down str))
                (t
                 (insert str str))))))
           (insert "\n")
@@ -197,14 +196,14 @@
               (cond
                ((and before-merge (eq merge trunk))
                 (setq before-merge nil)
-                (insert magit-graph-down str))
+                (insert magit-pg-down str))
                ((memq trunk trunk-merges)
                 (if before-merge
-                    (insert magit-graph-branchright magit-graph-bottomright)
+                    (insert magit-pg-branchright magit-pg-bottomright)
                   (delete-char -1)
-                  (insert magit-graph-bottomleft magit-graph-branchleft str)))
+                  (insert magit-pg-bottomleft magit-pg-branchleft str)))
                (trunk
-                (insert magit-graph-down str))
+                (insert magit-pg-down str))
                (t
                 (insert str str))))
             (insert "\n")))))
@@ -225,16 +224,16 @@
             (dolistc (otrunkc trunks)
               (cond
                ((equal (car otrunkc) (car trunkc))
-                (setq str magit-graph-across)
-                (insert magit-graph-branchright str))
+                (setq str magit-pg-across)
+                (insert magit-pg-branchright str))
                ((eq (car otrunkc) 'same)
                 (if (not (eq otrunkc l))
-                    (insert magit-graph-branchup str)
+                    (insert magit-pg-branchup str)
                   (setq str " ")
-                  (insert magit-graph-bottomright str))
+                  (insert magit-pg-bottomright str))
                 (setcar otrunkc nil))
                ((car otrunkc)
-                (insert magit-graph-down str))
+                (insert magit-pg-down str))
                (t
                 (insert str str)))))
           (insert "\n"))
