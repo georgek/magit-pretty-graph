@@ -1,22 +1,25 @@
 (defvar magit-pg-command
   "git --no-pager log --date-order --pretty=format:\"%H%x00%P%x00%h%x00%an%x00%ar%x00%s\"")
 
-(defvar magit-pg-head "┍")
-(defvar magit-pg-node "┝")
-(defvar magit-pg-tail "┕")
-(defvar magit-pg-down "│")
-(defvar magit-pg-branchright "├")
-(defvar magit-pg-branchleft "┤")
-(defvar magit-pg-branchcross "┼")
-(defvar magit-pg-branchdown "┬")
-(defvar magit-pg-branchup "┴")
-(defvar magit-pg-across "─")
-(defvar magit-pg-topright "╮")
-(defvar magit-pg-bottomright "╯")
-(defvar magit-pg-topleft "╭")
-(defvar magit-pg-bottomleft "╰")
-(defvar magit-pg-buffer-name "*magit-prettier-graph*")
-(defvar magit-pg-output-buffer-name "*magit-prettier-graph-output*")
+(defmacro magit-pg-defchar (name str)
+  `(defconst ,name (propertize ,str 'face 'magit-pg-trunk)))
+
+(magit-pg-defchar magit-pg-head "┍")
+(magit-pg-defchar magit-pg-node "┝")
+(magit-pg-defchar magit-pg-tail "┕")
+(magit-pg-defchar magit-pg-down "│")
+(magit-pg-defchar magit-pg-branchright "├")
+(magit-pg-defchar magit-pg-branchleft "┤")
+(magit-pg-defchar magit-pg-branchcross "┼")
+(magit-pg-defchar magit-pg-branchdown "┬")
+(magit-pg-defchar magit-pg-branchup "┴")
+(magit-pg-defchar magit-pg-across "─")
+(magit-pg-defchar magit-pg-topright "╮")
+(magit-pg-defchar magit-pg-bottomright "╯")
+(magit-pg-defchar magit-pg-topleft "╭")
+(magit-pg-defchar magit-pg-bottomleft "╰")
+(magit-pg-defchar magit-pg-buffer-name "*magit-prettier-graph*")
+(magit-pg-defchar magit-pg-output-buffer-name "*magit-prettier-graph-output*")
 
 (defgroup magit-pg-faces nil
   "Customize the appearance of Magit pretty graph."
@@ -38,6 +41,54 @@
     (((class color) (background dark))
      :foreground "sky blue"))
   "Face for the date element of the log output."
+  :group 'magit-pg-faces)
+
+(defface magit-pg-trunk
+  '((((class color) (background light))
+     :foreground "goldenrod4")
+    (((class color) (background dark))
+     :foreground "wheat"))
+  "Face for drawing trunks."
+  :group 'magit-pg-faces)
+
+(defface magit-pg-trunk-1
+  '((((class color) (background light))
+     :foreground "dark red")
+    (((class color) (background dark))
+     :foreground "light coral"))
+  "Face for drawing trunks."
+  :group 'magit-pg-faces)
+
+(defface magit-pg-trunk-2
+  '((((class color) (background light))
+     :foreground "dark green")
+    (((class color) (background dark))
+     :foreground "pale green"))
+  "Face for drawing trunks."
+  :group 'magit-pg-faces)
+
+(defface magit-pg-trunk-3
+  '((((class color) (background light))
+     :foreground "medium blue")
+    (((class color) (background dark))
+     :foreground "cyan"))
+  "Face for drawing trunks."
+  :group 'magit-pg-faces)
+
+(defface magit-pg-trunk-4
+  '((((class color) (background light))
+     :foreground "dark orange")
+    (((class color) (background dark))
+     :foreground "gold"))
+  "Face for drawing trunks."
+  :group 'magit-pg-faces)
+
+(defface magit-pg-trunk-5
+  '((((class color) (background light))
+     :foreground "purple")
+    (((class color) (background dark))
+     :foreground "orchid"))
+  "Face for drawing trunks."
   :group 'magit-pg-faces)
 
 (defun magit-pg-repo (directory)
