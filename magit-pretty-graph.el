@@ -78,7 +78,10 @@
             (mapcar
              #'(lambda (commit)
                  (setq commit (cons (cddr commit) commit))
-                 (setcdr (cdr commit) (split-string (caddr commit) " " t))
+                 (setcar (cdr commit) (magit-pg-parse-hash (cadr commit)))
+                 (setcdr (cdr commit) (mapcar
+                                       #'magit-pg-parse-hash
+                                       (split-string (caddr commit) " " t)))
                  commit)
              commits)))))
 
