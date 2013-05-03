@@ -1,6 +1,5 @@
 (defvar magit-pg-command
-  "git --no-pager log --topo-order --pretty=format:\"%H%x00%P%x00%h%x00%an%x00%ar%x00%s\"")
-
+  "git --no-pager log --date-order --pretty=format:\"%H%x00%P%x00%h%x00%an%x00%ar%x00%s\"")
 
 (defvar magit-pg-head "┍")
 (defvar magit-pg-node "┝")
