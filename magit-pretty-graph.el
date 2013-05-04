@@ -1,5 +1,10 @@
+;;; a pretty git graph drawn with emacs lisp
+
 (defvar magit-pg-command
-  "git --no-pager log --date-order --pretty=format:\"%H%x00%P%x00%h%x00%an%x00%ar%x00%s\"")
+  (concat "git --no-pager log --date-order "
+          "--pretty=format:\"%H%x00%P%x00%h%x00%an%x00%ar%x00%s\" "
+          "-n 100 --all"))
+
 (defconst magit-pg-buffer-name "*magit-prettier-graph*")
 (defconst magit-pg-output-buffer-name "*magit-prettier-graph-output*")
 
@@ -260,7 +265,8 @@
                 (insert (magit-pg-getchar branchleft) str))
                ((memq trunk trunk-merges)
                 (delete-char -1)
-                (insert (magit-pg-getchar topright) (magit-pg-getchar down) str))
+                (insert (magit-pg-getchar topright)
+                        (magit-pg-getchar down) str))
                (t
                 (insert (magit-pg-getchar topright) str))))
 
@@ -271,9 +277,11 @@
                 (insert magit-pg-cross str))
                ((memq trunk trunk-merges)
                 (if before-merge
-                    (insert (magit-pg-getchar down) (magit-pg-getchar branchdown))
+                    (insert (magit-pg-getchar down)
+                            (magit-pg-getchar branchdown))
                   (delete-char -1)
-                  (insert (magit-pg-getchar branchdown) (magit-pg-getchar down) str)))
+                  (insert (magit-pg-getchar branchdown)
+                          (magit-pg-getchar down) str)))
                (trunk
                 (insert (magit-pg-getchar down) str))
                (t
@@ -290,9 +298,11 @@
                 (insert (magit-pg-getchar down) str))
                ((memq trunk trunk-merges)
                 (if before-merge
-                    (insert (magit-pg-getchar branchright) (magit-pg-getchar bottomright))
+                    (insert (magit-pg-getchar branchright)
+                            (magit-pg-getchar bottomright))
                   (delete-char -1)
-                  (insert (magit-pg-getchar bottomleft) (magit-pg-getchar branchleft) str)))
+                  (insert (magit-pg-getchar bottomleft)
+                          (magit-pg-getchar branchleft) str)))
                (trunk
                 (insert (magit-pg-getchar down) str))
                (t
@@ -361,6 +371,10 @@
   "Loop over a list.
 Evaluate BODY with VAR bound to each cons from LIST, in turn.
 An implicit nil block is established around the loop.
+
+Modifying cdr's can have unforeseen consequences.  In particular
+the loop only terminates when it finds a cdr which is equal to
+nil
 
 \(fn (VAR LIST) BODY...)"
   (declare (indent 1))
