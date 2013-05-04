@@ -109,6 +109,24 @@
   "Face for drawing trunks."
   :group 'magit-pg-faces)
 
+(defun magit-pg-make-ring (length)
+  (let* ((l (make-list length 1))
+         (ll (car l)))
+    (dolistc (c (cdr l))
+      (setcar c (1+ ll))
+      (setq ll (car c))
+      (when (null (cdr c))
+        (setcdr c l)
+        (return l)))))
+
+(defconst magit-pg-colour-ring (magit-pg-make-ring 5))
+
+(defmacro magit-pg-cycle-colour (colour &rest body)
+  (declare (indent 1))
+  `(progn
+     ,@body
+     (setq ,colour (cdr ,colour))))
+
 (defun magit-pg-repo (directory)
   (with-current-buffer (get-buffer-create
                         magit-pg-output-buffer-name)
@@ -182,7 +200,8 @@
   "Prints a commit node, returns new trunks, destroys trunks input."
   (when (null trunks) (setq trunks (list nil)))
   (let* ((head (not (member (magit-pg-hash commit) trunks)))
-         (tail (and (not head) (null (magit-pg-parents commit)))))
+         (tail (and (not head) (null (magit-pg-parents commit))))
+         (colour magit-pg-colour-ring))
     (when head
       (dolistc (trunkc trunks)
         (cond
@@ -193,19 +212,20 @@
           (setcdr trunkc (cons (magit-pg-hash commit) nil))
           (return)))))
     (dolist (trunk trunks)
-      (cond
-       ((equal trunk (magit-pg-hash commit))
+      (magit-pg-cycle-colour colour
         (cond
-         (head
-          (insert (magit-pg-getchar head) " "))
-         (tail
-          (insert (magit-pg-getchar tail) " "))
-         (t
-          (insert (magit-pg-getchar node) " "))))
-       (trunk
-        (insert (magit-pg-getchar down) " "))
-       (t
-        (insert "  "))))
+        ((equal trunk (magit-pg-hash commit))
+         (cond
+          (head
+           (insert (magit-pg-getchar head (car colour)) " "))
+          (tail
+           (insert (magit-pg-getchar tail (car colour)) " "))
+          (t
+           (insert (magit-pg-getchar node (car colour)) " "))))
+        (trunk
+         (insert (magit-pg-getchar down (car colour)) " "))
+        (t
+         (insert "  ")))))
     (insert (magit-pg-commit-string commit) "\n")
     trunks))
 
@@ -223,7 +243,8 @@
       ;; deal with merge
       (let ((new-parents (set-difference parents trunks :test #'equal))
             (last-parent)
-            (first-parent))
+            (first-parent)
+            (colour magit-pg-colour-ring))
         ;; fill in nils and find rightmost parent
         (dolistc (trunkc trunks)
           (cond
@@ -245,74 +266,89 @@
         (let ((str " ")
               (before-merge t))
           (dolist (trunk trunks)
-            (cond
-             ((eq first-parent trunk)
-              (setq str (magit-pg-getchar across))
-              (cond
-               ((and before-merge (eq merge trunk))
-                (setq before-merge nil)
-                (insert (magit-pg-getchar branchright) str))
-               ((memq trunk trunk-merges)
-                (insert (magit-pg-getchar down) (magit-pg-getchar topleft)))
-               (t
-                (insert (magit-pg-getchar topleft) str))))
+            (magit-pg-cycle-colour colour
+             (cond
+              ((eq first-parent trunk)
+               (setq str (magit-pg-getchar across (car colour)))
+               (cond
+                ((and before-merge (eq merge trunk))
+                 (setq before-merge nil)
+                 (insert (magit-pg-getchar branchright (car colour))
+                         str))
+                ((memq trunk trunk-merges)
+                 (insert (magit-pg-getchar down (car colour))
+                         (magit-pg-getchar topleft (car colour))))
+                (t
+                 (insert (magit-pg-getchar topleft (car colour))
+                         str))))
 
-             ((eq last-parent trunk)
-              (setq str " ")
-              (cond
-               ((and before-merge (eq merge trunk))
-                (setq before-merge nil)
-                (insert (magit-pg-getchar branchleft) str))
-               ((memq trunk trunk-merges)
-                (delete-char -1)
-                (insert (magit-pg-getchar topright)
-                        (magit-pg-getchar down) str))
-               (t
-                (insert (magit-pg-getchar topright) str))))
+              ((eq last-parent trunk)
+               (setq str " ")
+               (cond
+                ((and before-merge (eq merge trunk))
+                 (setq before-merge nil)
+                 (insert (magit-pg-getchar branchleft (car colour))
+                         str))
+                ((memq trunk trunk-merges)
+                 (delete-char -1)
+                 (insert (magit-pg-getchar topright (car colour))
+                         (magit-pg-getchar down (car colour))
+                         str))
+                (t
+                 (insert (magit-pg-getchar topright (car colour))
+                         str))))
 
-             (t
-              (cond
-               ((and before-merge (eq merge trunk))
-                (setq before-merge nil)
-                (insert magit-pg-cross str))
-               ((memq trunk trunk-merges)
-                (if before-merge
-                    (insert (magit-pg-getchar down)
-                            (magit-pg-getchar branchdown))
-                  (delete-char -1)
-                  (insert (magit-pg-getchar branchdown)
-                          (magit-pg-getchar down) str)))
-               (trunk
-                (insert (magit-pg-getchar down) str))
-               (t
-                (insert str str))))))
+              (t
+               (cond
+                ((and before-merge (eq merge trunk))
+                 (setq before-merge nil)
+                 (insert (magit-pg-getchar branchcross (car colour)) str))
+                ((memq trunk trunk-merges)
+                 (if before-merge
+                     (insert (magit-pg-getchar down (car colour))
+                             (magit-pg-getchar branchdown (car colour)))
+                   (delete-char -1)
+                   (insert (magit-pg-getchar branchdown (car colour))
+                           (magit-pg-getchar down (car colour))
+                           str)))
+                (trunk
+                 (insert (magit-pg-getchar down (car colour))
+                         str))
+                (t
+                 (insert str str)))))))
           (insert "\n")
           ;; draw rest of trunk merges
           (setq str " ")
           (setq before-merge t)
+          (setq colour magit-pg-colour-ring)
           (when (consp trunk-merges)
             (dolist (trunk trunks)
-              (cond
-               ((and before-merge (eq merge trunk))
-                (setq before-merge nil)
-                (insert (magit-pg-getchar down) str))
-               ((memq trunk trunk-merges)
-                (if before-merge
-                    (insert (magit-pg-getchar branchright)
-                            (magit-pg-getchar bottomright))
-                  (delete-char -1)
-                  (insert (magit-pg-getchar bottomleft)
-                          (magit-pg-getchar branchleft) str)))
-               (trunk
-                (insert (magit-pg-getchar down) str))
-               (t
-                (insert str str))))
+              (magit-pg-cycle-colour colour
+               (cond
+                ((and before-merge (eq merge trunk))
+                 (setq before-merge nil)
+                 (insert (magit-pg-getchar down (car colour))
+                         str))
+                ((memq trunk trunk-merges)
+                 (if before-merge
+                     (insert (magit-pg-getchar branchright (car colour))
+                             (magit-pg-getchar bottomright (car colour)))
+                   (delete-char -1)
+                   (insert (magit-pg-getchar bottomleft (car colour))
+                           (magit-pg-getchar branchleft (car colour))
+                           str)))
+                (trunk
+                 (insert (magit-pg-getchar down (car colour))
+                         str))
+                (t
+                 (insert str str)))))
             (insert "\n")))))
 
     trunks))
 
 (defun magit-pg-print-branches (trunks)
-  (let ((l nil))
+  (let ((l nil)
+        (colour magit-pg-colour-ring))
     (dolistc (trunkc trunks)
       ;; find last element with same hash
       (unless (null (car trunkc))
@@ -323,20 +359,24 @@
         (when l                         ; branch
           (let ((str " "))
             (dolistc (otrunkc trunks)
-              (cond
-               ((equal (car otrunkc) (car trunkc))
-                (setq str (magit-pg-getchar across))
-                (insert (magit-pg-getchar branchright) str))
-               ((eq (car otrunkc) 'same)
-                (if (not (eq otrunkc l))
-                    (insert (magit-pg-getchar branchup) str)
-                  (setq str " ")
-                  (insert (magit-pg-getchar bottomright) str))
-                (setcar otrunkc nil))
-               ((car otrunkc)
-                (insert (magit-pg-getchar down) str))
-               (t
-                (insert str str)))))
+              (magit-pg-cycle-colour colour
+               (cond
+                ((equal (car otrunkc) (car trunkc))
+                 (setq str (magit-pg-getchar across (car colour)))
+                 (insert (magit-pg-getchar branchright (car colour))
+                         str))
+                ((eq (car otrunkc) 'same)
+                 (if (not (eq otrunkc l))
+                     (insert (magit-pg-getchar branchup) str)
+                   (setq str " ")
+                   (insert (magit-pg-getchar bottomright (car colour))
+                           str))
+                 (setcar otrunkc nil))
+                ((car otrunkc)
+                 (insert (magit-pg-getchar down (car colour))
+                         str))
+                (t
+                 (insert str str))))))
           (insert "\n"))
         (setq l nil)))
     trunks))
@@ -383,3 +423,9 @@ nil
        (while (consp ,(first spec))
          ,@body
          (setq ,(first spec) (rest ,(first spec)))))))
+
+(defmacro with-font-lock-face (face &rest body)
+  (declare (indent 1))
+  `(let ((beg (point)))
+     ,@body
+     (put-text-property beg (point) 'font-lock-face ,face)))
