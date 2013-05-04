@@ -1,8 +1,23 @@
 (defvar magit-pg-command
   "git --no-pager log --date-order --pretty=format:\"%H%x00%P%x00%h%x00%an%x00%ar%x00%s\"")
+(defconst magit-pg-buffer-name "*magit-prettier-graph*")
+(defconst magit-pg-output-buffer-name "*magit-prettier-graph-output*")
 
 (defmacro magit-pg-defchar (name str)
-  `(defconst ,name (propertize ,str 'face 'magit-pg-trunk)))
+  `(defconst ,name
+     (vector
+      (propertize ,str 'face 'magit-pg-trunk)
+      ,@(mapcar #'(lambda (n)
+                    (let ((nstr (number-to-string n)))
+                      `(propertize
+                        ,str 'face
+                        ',(intern (concat "magit-pg-trunk-" nstr)))))
+                (list 1 2 3 4 5)))))
+
+(defmacro magit-pg-getchar (name &optional colour)
+  (if (null colour)
+      `(elt ,(intern (concat "magit-pg-" (symbol-name name))) 0)
+    `(elt ,(intern (concat "magit-pg-" (symbol-name name))) ,colour)))
 
 (magit-pg-defchar magit-pg-head "┍")
 (magit-pg-defchar magit-pg-node "┝")
@@ -18,8 +33,6 @@
 (magit-pg-defchar magit-pg-bottomright "╯")
 (magit-pg-defchar magit-pg-topleft "╭")
 (magit-pg-defchar magit-pg-bottomleft "╰")
-(defconst magit-pg-buffer-name "*magit-prettier-graph*")
-(defconst magit-pg-output-buffer-name "*magit-prettier-graph-output*")
 
 (defgroup magit-pg-faces nil
   "Customize the appearance of Magit pretty graph."
@@ -45,9 +58,9 @@
 
 (defface magit-pg-trunk
   '((((class color) (background light))
-     :foreground "goldenrod4")
+     :foreground "black")
     (((class color) (background dark))
-     :foreground "wheat"))
+     :foreground "white"))
   "Face for drawing trunks."
   :group 'magit-pg-faces)
 
@@ -179,13 +192,13 @@
        ((equal trunk (magit-pg-hash commit))
         (cond
          (head
-          (insert magit-pg-head " "))
+          (insert (magit-pg-getchar head) " "))
          (tail
-          (insert magit-pg-tail " "))
+          (insert (magit-pg-getchar tail) " "))
          (t
-          (insert magit-pg-node " "))))
+          (insert (magit-pg-getchar node) " "))))
        (trunk
-        (insert magit-pg-down " "))
+        (insert (magit-pg-getchar down) " "))
        (t
         (insert "  "))))
     (insert (magit-pg-commit-string commit) "\n")
@@ -229,27 +242,27 @@
           (dolist (trunk trunks)
             (cond
              ((eq first-parent trunk)
-              (setq str magit-pg-across)
+              (setq str (magit-pg-getchar across))
               (cond
                ((and before-merge (eq merge trunk))
                 (setq before-merge nil)
-                (insert magit-pg-branchright str))
+                (insert (magit-pg-getchar branchright) str))
                ((memq trunk trunk-merges)
-                (insert magit-pg-down magit-pg-topleft))
+                (insert (magit-pg-getchar down) (magit-pg-getchar topleft)))
                (t
-                (insert magit-pg-topleft str))))
+                (insert (magit-pg-getchar topleft) str))))
 
              ((eq last-parent trunk)
               (setq str " ")
               (cond
                ((and before-merge (eq merge trunk))
                 (setq before-merge nil)
-                (insert magit-pg-branchleft str))
+                (insert (magit-pg-getchar branchleft) str))
                ((memq trunk trunk-merges)
                 (delete-char -1)
-                (insert magit-pg-topright magit-pg-down str))
+                (insert (magit-pg-getchar topright) (magit-pg-getchar down) str))
                (t
-                (insert magit-pg-topright str))))
+                (insert (magit-pg-getchar topright) str))))
 
              (t
               (cond
@@ -258,11 +271,11 @@
                 (insert magit-pg-cross str))
                ((memq trunk trunk-merges)
                 (if before-merge
-                    (insert magit-pg-down magit-pg-branchdown)
+                    (insert (magit-pg-getchar down) (magit-pg-getchar branchdown))
                   (delete-char -1)
-                  (insert magit-pg-branchdown magit-pg-down str)))
+                  (insert (magit-pg-getchar branchdown) (magit-pg-getchar down) str)))
                (trunk
-                (insert magit-pg-down str))
+                (insert (magit-pg-getchar down) str))
                (t
                 (insert str str))))))
           (insert "\n")
@@ -274,14 +287,14 @@
               (cond
                ((and before-merge (eq merge trunk))
                 (setq before-merge nil)
-                (insert magit-pg-down str))
+                (insert (magit-pg-getchar down) str))
                ((memq trunk trunk-merges)
                 (if before-merge
-                    (insert magit-pg-branchright magit-pg-bottomright)
+                    (insert (magit-pg-getchar branchright) (magit-pg-getchar bottomright))
                   (delete-char -1)
-                  (insert magit-pg-bottomleft magit-pg-branchleft str)))
+                  (insert (magit-pg-getchar bottomleft) (magit-pg-getchar branchleft) str)))
                (trunk
-                (insert magit-pg-down str))
+                (insert (magit-pg-getchar down) str))
                (t
                 (insert str str))))
             (insert "\n")))))
@@ -302,16 +315,16 @@
             (dolistc (otrunkc trunks)
               (cond
                ((equal (car otrunkc) (car trunkc))
-                (setq str magit-pg-across)
-                (insert magit-pg-branchright str))
+                (setq str (magit-pg-getchar across))
+                (insert (magit-pg-getchar branchright) str))
                ((eq (car otrunkc) 'same)
                 (if (not (eq otrunkc l))
-                    (insert magit-pg-branchup str)
+                    (insert (magit-pg-getchar branchup) str)
                   (setq str " ")
-                  (insert magit-pg-bottomright str))
+                  (insert (magit-pg-getchar bottomright) str))
                 (setcar otrunkc nil))
                ((car otrunkc)
-                (insert magit-pg-down str))
+                (insert (magit-pg-getchar down) str))
                (t
                 (insert str str)))))
           (insert "\n"))
