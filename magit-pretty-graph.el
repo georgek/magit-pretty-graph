@@ -312,7 +312,7 @@
                              (magit-pg-getchar branchdown colour))
                    (delete-char -1)
                    (insert (magit-pg-getchar branchdown colour)
-                           (magit-pg-getchar down olour)
+                           (magit-pg-getchar down colour)
                            str)))
                 (trunk
                  (insert (magit-pg-getchar down colour)
@@ -335,7 +335,7 @@
                 ((memq trunk trunk-merges)
                  (if before-merge
                      (insert (magit-pg-getchar branchright colour)
-                             (magit-pg-getchar bottomright olour))
+                             (magit-pg-getchar bottomright colour))
                    (delete-char -1)
                    (insert (magit-pg-getchar bottomleft colour)
                            (magit-pg-getchar branchleft colour)
@@ -376,7 +376,7 @@
                            str))
                  (setcar otrunkc nil))
                 ((car otrunkc)
-                 (insert (magit-pg-getchar down colour)
+                 (insert (magit-pg-getchar down our)
                          str))
                 (t
                  (insert str str))))))
