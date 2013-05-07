@@ -27,6 +27,7 @@
 (magit-pg-defchar magit-pg-head "┍")
 (magit-pg-defchar magit-pg-node "┝")
 (magit-pg-defchar magit-pg-tail "┕")
+(magit-pg-defchar magit-pg-commit "◆")
 (magit-pg-defchar magit-pg-down "│")
 (magit-pg-defchar magit-pg-branchright "├")
 (magit-pg-defchar magit-pg-branchleft "┤")
@@ -219,16 +220,22 @@
          ((equal trunk (magit-pg-hash commit))
           (cond
            (head
-            (insert (magit-pg-getchar head colour) " "))
+            (insert (magit-pg-getchar head colour)
+                    (magit-pg-getchar commit colour)
+                    ))
            (tail
-            (insert (magit-pg-getchar tail colour) " "))
+            (insert (magit-pg-getchar tail colour)
+                    (magit-pg-getchar commit colour)
+                    ))
            (t
-            (insert (magit-pg-getchar node colour) " "))))
+            (insert (magit-pg-getchar node colour)
+                    (magit-pg-getchar commit colour)
+                    ))))
          (trunk
           (insert (magit-pg-getchar down colour) " "))
          (t
           (insert "  ")))))
-    (insert (magit-pg-commit-string commit) "\n")
+    (insert " " (magit-pg-commit-string commit) "\n")
     trunks))
 
 (defun magit-pg-print-merge (trunks commit parents)
