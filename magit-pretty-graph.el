@@ -250,7 +250,7 @@
 
     (when (consp parents)
       ;; deal with merge
-      (let ((new-parents (set-difference parents trunks :test #'equal))
+      (let ((new-parents (cl-set-difference parents trunks :test #'equal))
             (last-parent)
             (first-parent)
             (colour 1))
