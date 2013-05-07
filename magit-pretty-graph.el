@@ -155,16 +155,16 @@
   (cddr commit))
 
 (defun magit-pg-shorthash (commit)
-  (first (car commit)))
+  (car (car commit)))
 
 (defun magit-pg-author (commit)
-  (second (car commit)))
+  (cadr (car commit)))
 
 (defun magit-pg-date (commit)
-  (third (car commit)))
+  (caddr (car commit)))
 
 (defun magit-pg-message (commit)
-  (fourth (car commit)))
+  (cadddr (car commit)))
 
 (defun magit-pg-commit-string (commit)
   (concat
@@ -422,10 +422,10 @@ nil
 \(fn (VAR LIST) BODY...)"
   (declare (indent 1))
   `(cl-block nil
-     (let ((,(first spec) ,(second spec)))
-       (while (consp ,(first spec))
+     (let ((,(car spec) ,(cadr spec)))
+       (while (consp ,(car spec))
          ,@body
-         (setq ,(first spec) (rest ,(first spec)))))))
+         (setq ,(car spec) (rest ,(car spec)))))))
 
 (defmacro with-font-lock-face (face &rest body)
   (declare (indent 1))
