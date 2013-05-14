@@ -1,4 +1,5 @@
 ;;; a pretty git graph drawn with emacs lisp
+(require 'cl)
 
 (defvar magit-pg-command
   (concat "git --no-pager log --date-order "
@@ -7,6 +8,29 @@
 
 (defconst magit-pg-buffer-name "*magit-prettier-graph*")
 (defconst magit-pg-output-buffer-name "*magit-prettier-graph-output*")
+
+(defmacro dolistc (spec &rest body)
+  "Loop over a list.
+Evaluate BODY with VAR bound to each cons from LIST, in turn.
+An implicit nil block is established around the loop.
+
+Modifying cdr's can have unforeseen consequences.  In particular
+the loop only terminates when it finds a cdr which is equal to
+nil
+
+\(fn (VAR LIST) BODY...)"
+  (declare (indent 1))
+  `(cl-block nil
+     (let ((,(car spec) ,(cadr spec)))
+       (while (consp ,(car spec))
+         ,@body
+         (setq ,(car spec) (rest ,(car spec)))))))
+
+(defmacro with-font-lock-face (face &rest body)
+  (declare (indent 1))
+  `(let ((beg (point)))
+     ,@body
+     (put-text-property beg (point) 'font-lock-face ,face)))
 
 (defmacro magit-pg-defchar (name str)
   `(defconst ,name
@@ -416,26 +440,3 @@
             (when (car trunkc)
               (setq last trunkc)))
           (setcdr last nil))))))
-
-(defmacro dolistc (spec &rest body)
-  "Loop over a list.
-Evaluate BODY with VAR bound to each cons from LIST, in turn.
-An implicit nil block is established around the loop.
-
-Modifying cdr's can have unforeseen consequences.  In particular
-the loop only terminates when it finds a cdr which is equal to
-nil
-
-\(fn (VAR LIST) BODY...)"
-  (declare (indent 1))
-  `(cl-block nil
-     (let ((,(car spec) ,(cadr spec)))
-       (while (consp ,(car spec))
-         ,@body
-         (setq ,(car spec) (rest ,(car spec)))))))
-
-(defmacro with-font-lock-face (face &rest body)
-  (declare (indent 1))
-  `(let ((beg (point)))
-     ,@body
-     (put-text-property beg (point) 'font-lock-face ,face)))
