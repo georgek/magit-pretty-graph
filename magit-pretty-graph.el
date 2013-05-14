@@ -345,7 +345,10 @@ nil
                    (insert (magit-pg-getchar branchdown colour)
                            (magit-pg-getchar down colour)
                            str)))
-                (trunk
+                ((member (car trunkc) parents)
+                 (insert (magit-pg-getchar branchdown colour)
+                         str))
+                ((car trunkc)
                  (insert (magit-pg-getchar down colour)
                          str))
                 (t
