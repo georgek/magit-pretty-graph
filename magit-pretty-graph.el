@@ -154,6 +154,12 @@ nil
      ,@body
      (setq ,start (1+ (mod ,start ,n)))))
 
+(defun magit-pg-next-colour (current &optional n)
+  "Returns the next colour in the cycle, or the nth next colour."
+  (unless n
+    (setq n 1))
+  (1+ (mod (+ (1- current) n) magit-pg-n-trunk-colours)))
+
 (defun magit-pg-repo (directory)
   (with-current-buffer (get-buffer-create
                         magit-pg-output-buffer-name)
@@ -262,6 +268,15 @@ nil
     (insert " " (magit-pg-commit-string commit) "\n")
     trunks))
 
+(defun magit-pg-n-to-next-parent (trunks parents)
+  "Returns number of trunks until next parent."
+  (let ((n 0))
+    (dolist (trunk (cdr trunks))
+      (setq n (1+ n))
+      (when (member trunk parents)
+        (return)))
+    n))
+
 (defun magit-pg-print-merge (trunks commit parents)
   "Prints a merge (if there is one) and returns new trunks (destructively)."
   (let (merge
@@ -304,8 +319,9 @@ nil
               ((eq first-parent (car trunkc))
                (setq str (magit-pg-getchar
                           across
-                          ()
-                                           ))
+                          (magit-pg-next-colour
+                           colour
+                           (magit-pg-n-to-next-parent trunkc parents))))
                (cond
                 ((and before-merge (eq merge (car trunkc)))
                  (setq before-merge nil)
@@ -402,7 +418,10 @@ nil
               (magit-pg-cycle-colour colour magit-pg-n-trunk-colours
                (cond
                 ((equal (car otrunkc) (car trunkc))
-                 (setq str (magit-pg-getchar across colour))
+                 (setq str (magit-pg-getchar
+                            across
+                            (magit-pg-next-colour
+                             colour (1+ (position 'same (cdr otrunkc))))))
                  (insert (magit-pg-getchar branchright colour)
                          str))
                 ((eq (car otrunkc) 'same)
