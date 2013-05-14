@@ -298,31 +298,31 @@ nil
         ;; draw merge
         (let ((str " ")
               (before-merge t))
-          (dolist (trunk trunks)
+          (dolistc (trunkc trunks)
             (magit-pg-cycle-colour colour magit-pg-n-branch-colours
              (cond
-              ((eq first-parent trunk)
+              ((eq first-parent (car trunkc))
                (setq str (magit-pg-getchar across colour))
                (cond
-                ((and before-merge (eq merge trunk))
+                ((and before-merge (eq merge (car trunkc)))
                  (setq before-merge nil)
                  (insert (magit-pg-getchar branchright colour)
                          str))
-                ((memq trunk trunk-merges)
+                ((memq (car trunkc) trunk-merges)
                  (insert (magit-pg-getchar down colour)
                          (magit-pg-getchar topleft colour)))
                 (t
                  (insert (magit-pg-getchar topleft colour)
                          str))))
 
-              ((eq last-parent trunk)
+              ((eq last-parent (car trunkc))
                (setq str " ")
                (cond
-                ((and before-merge (eq merge trunk))
+                ((and before-merge (eq merge (car trunkc)))
                  (setq before-merge nil)
                  (insert (magit-pg-getchar branchleft colour)
                          str))
-                ((memq trunk trunk-merges)
+                ((memq (car trunkc) trunk-merges)
                  (delete-char -1)
                  (insert (magit-pg-getchar topright colour)
                          (magit-pg-getchar down colour)
@@ -333,11 +333,11 @@ nil
 
               (t
                (cond
-                ((and before-merge (eq merge trunk))
+                ((and before-merge (eq merge (car trunkc)))
                  (setq before-merge nil)
                  (insert (magit-pg-getchar branchcross colour)
                          str))
-                ((memq trunk trunk-merges)
+                ((memq (car trunkc) trunk-merges)
                  (if before-merge
                      (insert (magit-pg-getchar down colour)
                              (magit-pg-getchar branchdown colour))
