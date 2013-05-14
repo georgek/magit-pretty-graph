@@ -146,7 +146,7 @@ nil
 
 (defconst magit-pg-colour-ring (magit-pg-make-ring 5))
 
-(defconst magit-pg-n-branch-colours 5)
+(defconst magit-pg-n-trunk-colours 5)
 
 (defmacro magit-pg-cycle-colour (start n &rest body)
   (declare (indent 1))
@@ -239,7 +239,7 @@ nil
           (setcdr trunkc (cons (magit-pg-hash commit) nil))
           (return)))))
     (dolist (trunk trunks)
-      (magit-pg-cycle-colour colour magit-pg-n-branch-colours
+      (magit-pg-cycle-colour colour magit-pg-n-trunk-colours
         (cond
          ((equal trunk (magit-pg-hash commit))
           (cond
@@ -299,10 +299,13 @@ nil
         (let ((str " ")
               (before-merge t))
           (dolistc (trunkc trunks)
-            (magit-pg-cycle-colour colour magit-pg-n-branch-colours
+            (magit-pg-cycle-colour colour magit-pg-n-trunk-colours
              (cond
               ((eq first-parent (car trunkc))
-               (setq str (magit-pg-getchar across colour))
+               (setq str (magit-pg-getchar
+                          across
+                          ()
+                                           ))
                (cond
                 ((and before-merge (eq merge (car trunkc)))
                  (setq before-merge nil)
@@ -360,7 +363,7 @@ nil
           (setq colour 1)
           (when (consp trunk-merges)
             (dolist (trunk trunks)
-              (magit-pg-cycle-colour colour magit-pg-n-branch-colours
+              (magit-pg-cycle-colour colour magit-pg-n-trunk-colours
                (cond
                 ((and before-merge (eq merge trunk))
                  (setq before-merge nil)
@@ -396,7 +399,7 @@ nil
         (when l                         ; branch
           (let ((str " "))
             (dolistc (otrunkc trunks)
-              (magit-pg-cycle-colour colour magit-pg-n-branch-colours
+              (magit-pg-cycle-colour colour magit-pg-n-trunk-colours
                (cond
                 ((equal (car otrunkc) (car trunkc))
                  (setq str (magit-pg-getchar across colour))
