@@ -317,11 +317,13 @@ nil
             (magit-pg-cycle-colour colour magit-pg-n-trunk-colours
              (cond
               ((eq first-parent (car trunkc))
-               (setq str (magit-pg-getchar
-                          across
-                          (magit-pg-next-colour
-                           colour
-                           (magit-pg-n-to-next-parent trunkc parents))))
+               (if (and before-merge (not (eq merge (car trunkc))))
+                   (setq str (magit-pg-getchar across colour))
+                 (setq str (magit-pg-getchar
+                            across
+                            (magit-pg-next-colour
+                             colour
+                             (magit-pg-n-to-next-parent trunkc parents)))))
                (cond
                 ((and before-merge (eq merge (car trunkc)))
                  (setq before-merge nil)
