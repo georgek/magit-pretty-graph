@@ -58,6 +58,16 @@ parents (a list)."
   (setq commit (magit-pg-test-empty-commit 4 (list 5 1 2 3)))
   (magit-pg-print-merge trunks commit (magit-pg-parents commit)))
 
+(magit-pg-deftest branchleft ("├─│─┴─│─┴─│─┴─│─╯ ")
+  (setq trunks (list 1 2 1 3 1 4 1 5 1))
+  (magit-pg-print-branches trunks))
+
+(magit-pg-deftest branchmulti ("├─┴─│─│─│─╯ │ │ │ "
+                               "│   ├─┴─│───╯ │ │ "
+                               "│   │   ├─────┴─╯ ")
+  (setq trunks (list 1 1 2 2 3 1 2 3 3))
+  (magit-pg-print-branches trunks))
+
 (defun magit-pg-test-alltests ()
   (reduce #'(lambda (t1 t2) (and t1 t2))
           (mapcar #'funcall magit-pg-tests)))
