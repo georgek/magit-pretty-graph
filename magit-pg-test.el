@@ -30,7 +30,8 @@
        (setq magit-pg-tests (remove-duplicates magit-pg-tests)))))
 
 (defmacro magit-pg-runtest (test)
-  `(funcall ,(intern (concat "magit-pg-testfun-" (symbol-name test)))))
+  `(funcall (function
+             ,(intern (concat "magit-pg-testfun-" (symbol-name test))))))
 
 (defun magit-pg-test-empty-commit (hash parents)
   "Makes a valid commit with given hash (an object) and
