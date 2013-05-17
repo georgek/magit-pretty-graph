@@ -149,7 +149,7 @@ nil
 (defconst magit-pg-n-trunk-colours 5)
 
 (defmacro magit-pg-cycle-colour (start n &rest body)
-  (declare (indent 1))
+  (declare (indent 2))
   `(progn
      ,@body
      (setq ,start (1+ (mod ,start ,n)))))
