@@ -1,5 +1,5 @@
 ;;; a pretty git graph drawn with emacs lisp
-(require 'cl)
+(require 'cl-lib)
 
 (defvar magit-pg-command
   (concat "git --no-pager log --date-order "

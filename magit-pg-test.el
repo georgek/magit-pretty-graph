@@ -1,4 +1,5 @@
 ;;; testing routines for pretty graph
+(require 'cl-lib)
 
 (defconst magit-pg-test-buffer-name "*magit-pg-test*")
 
@@ -15,7 +16,7 @@
         (output-sym (gensym)))
     (mapc #'(lambda (form) (when (eq (car form) 'setq) (push (cadr form) vars)))
           body)
-    (setq vars (remove-duplicates vars :test #'eq))
+    (setq vars (cl-remove-duplicates vars :test #'eq))
     `(progn
        (defun ,test-sym ()
          (let (,@vars
@@ -27,7 +28,7 @@
              ,@body
              (string= (buffer-string) ,output-sym))))
        (push ',test-sym magit-pg-tests)
-       (setq magit-pg-tests (remove-duplicates magit-pg-tests)))))
+       (setq magit-pg-tests (cl-remove-duplicates magit-pg-tests)))))
 
 (defmacro magit-pg-runtest (test)
   `(funcall (function
