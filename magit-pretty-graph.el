@@ -51,7 +51,7 @@ nil
 (magit-pg-defchar magit-pg-head "┍")
 (magit-pg-defchar magit-pg-node "┝")
 (magit-pg-defchar magit-pg-tail "┕")
-(magit-pg-defchar magit-pg-commit "◆")
+(magit-pg-defchar magit-pg-commit "◇")
 (magit-pg-defchar magit-pg-down "│")
 (magit-pg-defchar magit-pg-branchright "├")
 (magit-pg-defchar magit-pg-branchleft "┤")
