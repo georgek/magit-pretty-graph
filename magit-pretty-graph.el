@@ -4,7 +4,7 @@
 (defvar magit-pg-command
   (concat "git --no-pager log --date-order "
           "--pretty=format:\"%H%x00%P%x00%h%x00%an%x00%ar%x00%s\" "
-          "-n 100 --all"))
+          "--all"))
 
 (defconst magit-pg-buffer-name "*magit-prettier-graph*")
 (defconst magit-pg-output-buffer-name "*magit-prettier-graph-output*")
