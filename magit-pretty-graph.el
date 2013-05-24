@@ -186,16 +186,16 @@ nil
   (cddr commit))
 
 (defun magit-pg-shorthash (commit)
-  (car (car commit)))
+  (nth 0 (car commit)))
 
 (defun magit-pg-author (commit)
-  (cadr (car commit)))
+  (nth 1 (car commit)))
 
 (defun magit-pg-date (commit)
-  (caddr (car commit)))
+  (nth 2 (car commit)))
 
 (defun magit-pg-message (commit)
-  (cadddr (car commit)))
+  (nth 3 (car commit)))
 
 (defun magit-pg-commit-string (commit)
   (concat
