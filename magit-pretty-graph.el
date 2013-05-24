@@ -405,8 +405,7 @@ nil
     trunks))
 
 (defun magit-pg-print-branches (trunks)
-  (let ((l nil)
-        (colour 1))
+  (let ((l nil))
     (dolistc (trunkc trunks)
       ;; find last element with same hash
       (unless (null (car trunkc))
@@ -415,29 +414,35 @@ nil
             (setq l otrunkc)
             (setcar otrunkc 'same)))
         (when l                         ; branch
-          (let ((str " "))
+          (let ((str " ")
+                (colour 1))
             (dolistc (otrunkc trunks)
               (magit-pg-cycle-colour colour magit-pg-n-trunk-colours
-               (cond
-                ((equal (car otrunkc) (car trunkc))
-                 (setq str (magit-pg-getchar
-                            across
-                            (magit-pg-next-colour
-                             colour (1+ (position 'same (cdr otrunkc))))))
-                 (insert (magit-pg-getchar branchright colour)
-                         str))
-                ((eq (car otrunkc) 'same)
-                 (if (not (eq otrunkc l))
-                     (insert (magit-pg-getchar branchup colour) str)
-                   (setq str " ")
-                   (insert (magit-pg-getchar bottomright colour)
-                           str))
-                 (setcar otrunkc nil))
-                ((car otrunkc)
-                 (insert (magit-pg-getchar down colour)
-                         str))
-                (t
-                 (insert str str))))))
+                (cond
+                 ((equal (car otrunkc) (car trunkc))
+                  (setq str (magit-pg-getchar
+                             across
+                             (magit-pg-next-colour
+                              colour (1+ (position 'same (cdr otrunkc))))))
+                  (insert (magit-pg-getchar branchright colour)
+                          str))
+                 ((eq (car otrunkc) 'same)
+                  (if (not (eq otrunkc l))
+                      (progn
+                        (setq str (magit-pg-getchar
+                                   across
+                                   (magit-pg-next-colour
+                                    colour (1+ (position 'same (cdr otrunkc))))))
+                        (insert (magit-pg-getchar branchup colour) str))
+                    (setq str " ")
+                    (insert (magit-pg-getchar bottomright colour)
+                            str))
+                  (setcar otrunkc nil))
+                 ((car otrunkc)
+                  (insert (magit-pg-getchar down colour)
+                          str))
+                 (t
+                  (insert str str))))))
           (insert "\n"))
         (setq l nil)))
     trunks))
