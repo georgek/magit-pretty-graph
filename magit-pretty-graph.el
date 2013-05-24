@@ -206,9 +206,19 @@ nil
                    (split-string (substring (magit-pg-refs commit) 2 -1) ", " t)))
     (when (consp refs)
       (concat
-       " ["
-       (reduce (lambda (x y) (concat x " " y)) refs)
-       "]"))))
+       " "
+       (reduce (lambda (x y) (concat x " " y))
+               (mapcar #'magit-pg-ref-propertize
+                       refs))))))
+
+(defun magit-pg-ref-propertize (ref)
+  (let ((face 'magit-log-head-label-default))
+    (cond
+     ((string-match-p ".+/.+" ref)
+      (setq face 'magit-log-head-label-remote))
+     (t
+      (setq face 'magit-log-head-label-local)))
+    (propertize ref 'face face)))
 
 (defun magit-pg-commit-string (commit)
   (concat
