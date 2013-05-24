@@ -3,7 +3,7 @@
 
 (defvar magit-pg-command
   (concat "git --no-pager log --date-order "
-          "--pretty=format:\"%H%x00%P%x00%h%x00%an%x00%ar%x00%s\" "
+          "--pretty=format:\"%H%x00%P%x00%h%x00%an%x00%ar%x00%s%x00%d\" "
           "--all"))
 
 (defconst magit-pg-buffer-name "*magit-prettier-graph*")
@@ -197,9 +197,23 @@ nil
 (defun magit-pg-message (commit)
   (nth 3 (car commit)))
 
+(defun magit-pg-refs (commit)
+  (nth 4 (car commit)))
+
+(defun magit-pg-refs-string (commit)
+  (let (refs)
+    (setq refs (or (string-empty-p (magit-pg-refs commit))
+                   (split-string (substring (magit-pg-refs commit) 2 -1) ", " t)))
+    (when (consp refs)
+      (concat
+       " ["
+       (reduce (lambda (x y) (concat x " " y)) refs)
+       "]"))))
+
 (defun magit-pg-commit-string (commit)
   (concat
    (propertize (magit-pg-shorthash commit) 'face 'magit-log-sha1)
+   (magit-pg-refs-string commit)
    " ("
    (propertize (truncate-string-to-width
                 (magit-pg-author commit)
