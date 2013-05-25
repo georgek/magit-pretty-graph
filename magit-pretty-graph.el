@@ -9,7 +9,7 @@
 (defconst magit-pg-buffer-name "*magit-prettier-graph*")
 (defconst magit-pg-output-buffer-name "*magit-prettier-graph-output*")
 
-(defmacro dolistc (spec &rest body)
+(defmacro magit-pg-dolistc (spec &rest body)
   "Loop over a list.
 Evaluate BODY with VAR bound to each cons from LIST, in turn.
 An implicit nil block is established around the loop.
@@ -26,7 +26,7 @@ nil
          ,@body
          (setq ,(car spec) (rest ,(car spec)))))))
 
-(defmacro with-font-lock-face (face &rest body)
+(defmacro magit-pg-with-font-lock-face (face &rest body)
   (declare (indent 1))
   `(let ((beg (point)))
      ,@body
@@ -137,7 +137,7 @@ nil
 (defun magit-pg-make-ring (length)
   (let* ((l (make-list length 1))
          (ll (car l)))
-    (dolistc (c (cdr l))
+    (magit-pg-dolistc (c (cdr l))
       (setcar c (1+ ll))
       (setq ll (car c))
       (when (null (cdr c))
@@ -236,7 +236,7 @@ nil
          (tail (and (not head) (null (magit-pg-parents commit))))
          (colour 1))
     (when head
-      (dolistc (trunkc trunks)
+      (magit-pg-dolistc (trunkc trunks)
         (cond
          ((null (car trunkc))
           (setcar trunkc (magit-pg-hash commit))
@@ -281,7 +281,7 @@ nil
   "Prints a merge (if there is one) and returns new trunks (destructively)."
   (let (merge
         (trunk-merges (list)))
-    (dolistc (trunkc trunks)
+    (magit-pg-dolistc (trunkc trunks)
       (when (equal (car trunkc) (magit-pg-hash commit))
         (setcar trunkc (pop parents))
         (setq merge (car trunkc))
@@ -294,7 +294,7 @@ nil
             (first-parent)
             (colour 1))
         ;; fill in nils and find rightmost parent
-        (dolistc (trunkc trunks)
+        (magit-pg-dolistc (trunkc trunks)
           (cond
            ((eq (car trunkc) merge)
             (or first-parent (setq first-parent (car trunkc)))
@@ -313,7 +313,7 @@ nil
         ;; draw merge
         (let ((str " ")
               (before-merge t))
-          (dolistc (trunkc trunks)
+          (magit-pg-dolistc (trunkc trunks)
             (magit-pg-cycle-colour colour magit-pg-n-trunk-colours
              (cond
               ((eq first-parent (car trunkc))
@@ -407,16 +407,16 @@ nil
 (defun magit-pg-print-branches (trunks)
   (let ((l nil)
         (colour 1))
-    (dolistc (trunkc trunks)
+    (magit-pg-dolistc (trunkc trunks)
       ;; find last element with same hash
       (unless (null (car trunkc))
-        (dolistc (otrunkc (rest trunkc))
+        (magit-pg-dolistc (otrunkc (rest trunkc))
           (when (equal (car trunkc) (car otrunkc))
             (setq l otrunkc)
             (setcar otrunkc 'same)))
         (when l                         ; branch
           (let ((str " "))
-            (dolistc (otrunkc trunks)
+            (magit-pg-dolistc (otrunkc trunks)
               (magit-pg-cycle-colour colour magit-pg-n-trunk-colours
                (cond
                 ((equal (car otrunkc) (car trunkc))
@@ -463,7 +463,7 @@ nil
         (setq trunks (magit-pg-print-branches trunks))
         ;; remove nils at end
         (let ((last trunks))
-          (dolistc (trunkc trunks)
+          (magit-pg-dolistc (trunkc trunks)
             (when (car trunkc)
               (setq last trunkc)))
           (setcdr last nil))))))
