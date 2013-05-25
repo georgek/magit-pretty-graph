@@ -160,16 +160,18 @@ nil
     (setq n 1))
   (1+ (mod (+ (1- current) n) magit-pg-n-trunk-colours)))
 
-(defun magit-pg-repo (directory)
+(defun magit-pg-repo (&optional directory)
+  (interactive)
   (with-current-buffer (get-buffer-create
                         magit-pg-output-buffer-name)
     (erase-buffer)
-    (cd directory)
+    (cd (or directory default-directory))
     (call-process-shell-command
      magit-pg-command
      nil
      magit-pg-output-buffer-name))
-  (magit-pg magit-pg-output-buffer-name))
+  (magit-pg magit-pg-output-buffer-name)
+  (pop-to-buffer magit-pg-buffer-name))
 
 (defun magit-pg-parse-hash (hash-str)
   (let (hash)
