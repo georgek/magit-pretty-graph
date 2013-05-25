@@ -207,9 +207,7 @@ nil
     (when (consp refs)
       (concat
        " "
-       (reduce (lambda (x y) (concat x " " y))
-               (mapcar #'magit-pg-ref-propertize
-                       refs))))))
+       (mapconcat #'magit-pg-ref-propertize refs " ")))))
 
 (defun magit-pg-ref-propertize (ref)
   (let ((face 'magit-log-head-label-default))
