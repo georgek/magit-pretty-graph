@@ -1,4 +1,41 @@
-;;; a pretty git graph drawn with emacs lisp
+;;; magit-pretty-graph.el --- a pretty git graph drawn with Emacs lisp
+
+;; Copyright (C) 2013  George Kettleborough
+
+;; Author: George Kettleborough <g.kettleborough@member.fsf.org>
+;; Created: 20130426
+;; Version: 0.1.0
+;; Status: experimental
+;; Package-Requires: ((cl-lib "0.2") (magit "1.2.0"))
+;; Homepage: https://github.com/georgek/magit-pretty-graph
+
+;; This file is not part of Magit.
+;; This file is not part of GNU Emacs.
+
+;; This file is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+
+;; This file is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; For a full copy of the GNU General Public License
+;; see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; A pretty git graph drawn with Emacs lisp.
+
+;; This isn't ready yet but you can already try it out in a git
+;; repository like this:
+;;
+;;   M-x magit-pg-repo
+
+;;; Code:
+
 (require 'cl-lib)
 
 (defvar magit-pg-command
@@ -469,3 +506,6 @@ nil
             (when (car trunkc)
               (setq last trunkc)))
           (setcdr last nil))))))
+
+(provide 'magit-pretty-graph)
+;;; magit-pretty-graph.el ends here
