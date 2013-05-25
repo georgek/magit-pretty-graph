@@ -1,4 +1,41 @@
-;;; a pretty git graph drawn with emacs lisp
+;;; magit-pretty-graph.el --- a pretty git graph drawn with Emacs lisp
+
+;; Copyright (C) 2013  George Kettleborough
+
+;; Author: George Kettleborough <g.kettleborough@member.fsf.org>
+;; Created: 20130426
+;; Version: 0.1.0
+;; Status: experimental
+;; Package-Requires: ((cl-lib "0.2") (magit "1.2.0"))
+;; Homepage: https://github.com/georgek/magit-pretty-graph
+
+;; This file is not part of Magit.
+;; This file is not part of GNU Emacs.
+
+;; This file is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+
+;; This file is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; For a full copy of the GNU General Public License
+;; see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; A pretty git graph drawn with Emacs lisp.
+
+;; This isn't ready yet but you can already try it out in a git
+;; repository like this:
+;;
+;;   M-x magit-pg-repo
+
+;;; Code:
+
 (require 'cl-lib)
 
 (defvar magit-pg-command
@@ -9,7 +46,7 @@
 (defconst magit-pg-buffer-name "*magit-prettier-graph*")
 (defconst magit-pg-output-buffer-name "*magit-prettier-graph-output*")
 
-(defmacro dolistc (spec &rest body)
+(defmacro magit-pg-dolistc (spec &rest body)
   "Loop over a list.
 Evaluate BODY with VAR bound to each cons from LIST, in turn.
 An implicit nil block is established around the loop.
@@ -26,7 +63,7 @@ nil
          ,@body
          (setq ,(car spec) (rest ,(car spec)))))))
 
-(defmacro with-font-lock-face (face &rest body)
+(defmacro magit-pg-with-font-lock-face (face &rest body)
   (declare (indent 1))
   `(let ((beg (point)))
      ,@body
@@ -137,7 +174,7 @@ nil
 (defun magit-pg-make-ring (length)
   (let* ((l (make-list length 1))
          (ll (car l)))
-    (dolistc (c (cdr l))
+    (magit-pg-dolistc (c (cdr l))
       (setcar c (1+ ll))
       (setq ll (car c))
       (when (null (cdr c))
@@ -160,16 +197,18 @@ nil
     (setq n 1))
   (1+ (mod (+ (1- current) n) magit-pg-n-trunk-colours)))
 
-(defun magit-pg-repo (directory)
+(defun magit-pg-repo (&optional directory)
+  (interactive)
   (with-current-buffer (get-buffer-create
                         magit-pg-output-buffer-name)
     (erase-buffer)
-    (cd directory)
+    (cd (or directory default-directory))
     (call-process-shell-command
      magit-pg-command
      nil
      magit-pg-output-buffer-name))
-  (magit-pg magit-pg-output-buffer-name))
+  (magit-pg magit-pg-output-buffer-name)
+  (pop-to-buffer magit-pg-buffer-name))
 
 (defun magit-pg-parse-hash (hash-str)
   (let (hash)
@@ -236,7 +275,7 @@ nil
          (tail (and (not head) (null (magit-pg-parents commit))))
          (colour 1))
     (when head
-      (dolistc (trunkc trunks)
+      (magit-pg-dolistc (trunkc trunks)
         (cond
          ((null (car trunkc))
           (setcar trunkc (magit-pg-hash commit))
@@ -281,7 +320,7 @@ nil
   "Prints a merge (if there is one) and returns new trunks (destructively)."
   (let (merge
         (trunk-merges (list)))
-    (dolistc (trunkc trunks)
+    (magit-pg-dolistc (trunkc trunks)
       (when (equal (car trunkc) (magit-pg-hash commit))
         (setcar trunkc (pop parents))
         (setq merge (car trunkc))
@@ -294,7 +333,7 @@ nil
             (first-parent)
             (colour 1))
         ;; fill in nils and find rightmost parent
-        (dolistc (trunkc trunks)
+        (magit-pg-dolistc (trunkc trunks)
           (cond
            ((eq (car trunkc) merge)
             (or first-parent (setq first-parent (car trunkc)))
@@ -313,7 +352,7 @@ nil
         ;; draw merge
         (let ((str " ")
               (before-merge t))
-          (dolistc (trunkc trunks)
+          (magit-pg-dolistc (trunkc trunks)
             (magit-pg-cycle-colour colour magit-pg-n-trunk-colours
              (cond
               ((eq first-parent (car trunkc))
@@ -407,16 +446,16 @@ nil
 (defun magit-pg-print-branches (trunks)
   (let ((l nil)
         (colour 1))
-    (dolistc (trunkc trunks)
+    (magit-pg-dolistc (trunkc trunks)
       ;; find last element with same hash
       (unless (null (car trunkc))
-        (dolistc (otrunkc (rest trunkc))
+        (magit-pg-dolistc (otrunkc (rest trunkc))
           (when (equal (car trunkc) (car otrunkc))
             (setq l otrunkc)
             (setcar otrunkc 'same)))
         (when l                         ; branch
           (let ((str " "))
-            (dolistc (otrunkc trunks)
+            (magit-pg-dolistc (otrunkc trunks)
               (magit-pg-cycle-colour colour magit-pg-n-trunk-colours
                (cond
                 ((equal (car otrunkc) (car trunkc))
@@ -463,7 +502,10 @@ nil
         (setq trunks (magit-pg-print-branches trunks))
         ;; remove nils at end
         (let ((last trunks))
-          (dolistc (trunkc trunks)
+          (magit-pg-dolistc (trunkc trunks)
             (when (car trunkc)
               (setq last trunkc)))
           (setcdr last nil))))))
+
+(provide 'magit-pretty-graph)
+;;; magit-pretty-graph.el ends here
