@@ -39,7 +39,7 @@
 (require 'cl-lib)
 
 (defvar magit-pg-command
-  (concat "git --no-pager log --date-order "
+  (concat "git --no-pager log --date-order --decorate=full "
           "--pretty=format:\"%H%x00%P%x00%h%x00%an%x00%ar%x00%s%x00%d\" "
           "--all"))
 
