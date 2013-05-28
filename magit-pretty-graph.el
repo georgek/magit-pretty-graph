@@ -377,65 +377,79 @@ nil
               (before-merge t))
           (magit-pg-dolistc (trunkc trunks)
             (magit-pg-cycle-colour colour magit-pg-n-trunk-colours
-             (cond
-              ((eq first-parent (car trunkc))
-               (if (and before-merge (not (eq merge (car trunkc))))
-                   (setq str (magit-pg-getchar across colour))
-                 (setq str (magit-pg-getchar
-                            across
-                            (magit-pg-next-colour
-                             colour
-                             (magit-pg-n-to-next-parent trunkc parents)))))
-               (cond
-                ((and before-merge (eq merge (car trunkc)))
-                 (setq before-merge nil)
-                 (insert (magit-pg-getchar branchright colour)
-                         str))
-                ((memq (car trunkc) trunk-merges)
-                 (insert (magit-pg-getchar down colour)
-                         (magit-pg-getchar topleft colour)))
-                (t
-                 (insert (magit-pg-getchar topleft colour)
-                         str))))
+              (cond
+               ((eq first-parent (car trunkc))
+                (if (and before-merge (not (eq merge (car trunkc))))
+                    (setq str (magit-pg-getchar across colour))
+                  (setq str (magit-pg-getchar
+                             across
+                             (magit-pg-next-colour
+                              colour
+                              (magit-pg-n-to-next-parent trunkc parents)))))
+                (cond
+                 ((and before-merge (eq merge (car trunkc)))
+                  (setq before-merge nil)
+                  (insert (magit-pg-getchar branchright colour)
+                          str))
+                 ((memq (car trunkc) trunk-merges)
+                  (insert (magit-pg-getchar down colour)
+                          (magit-pg-getchar topleft colour)))
+                 (t
+                  (insert (magit-pg-getchar topleft colour)
+                          str))))
 
-              ((eq last-parent (car trunkc))
-               (setq str " ")
-               (cond
-                ((and before-merge (eq merge (car trunkc)))
-                 (setq before-merge nil)
-                 (insert (magit-pg-getchar branchleft colour)
-                         str))
-                ((memq (car trunkc) trunk-merges)
-                 (delete-char -1)
-                 (insert (magit-pg-getchar topright colour)
-                         (magit-pg-getchar down colour)
-                         str))
-                (t
-                 (insert (magit-pg-getchar topright colour)
-                         str))))
+               ((eq last-parent (car trunkc))
+                (setq str " ")
+                (cond
+                 ((and before-merge (eq merge (car trunkc)))
+                  (setq before-merge nil)
+                  (insert (magit-pg-getchar branchleft colour)
+                          str))
+                 ((memq (car trunkc) trunk-merges)
+                  (delete-char -1)
+                  (insert (magit-pg-getchar topright colour)
+                          (magit-pg-getchar down colour)
+                          str))
+                 (t
+                  (insert (magit-pg-getchar topright colour)
+                          str))))
 
-              (t
-               (cond
-                ((and before-merge (eq merge (car trunkc)))
-                 (setq before-merge nil)
-                 (insert (magit-pg-getchar branchcross colour)
-                         str))
-                ((memq (car trunkc) trunk-merges)
-                 (if before-merge
-                     (insert (magit-pg-getchar down colour)
-                             (magit-pg-getchar branchdown colour))
-                   (delete-char -1)
-                   (insert (magit-pg-getchar branchdown colour)
-                           (magit-pg-getchar down colour)
-                           str)))
-                ((member (car trunkc) parents)
-                 (insert (magit-pg-getchar branchdown colour)
-                         str))
-                ((car trunkc)
-                 (insert (magit-pg-getchar down colour)
-                         str))
-                (t
-                 (insert str str)))))))
+               (t
+                (cond
+                 ((and before-merge (eq merge (car trunkc)))
+                  (setq before-merge nil)
+                  (insert (magit-pg-getchar branchcross colour)
+                          str))
+                 ((memq (car trunkc) trunk-merges)
+                  (if before-merge
+                      (progn
+                        (setq str (magit-pg-getchar across colour))
+                        (insert (magit-pg-getchar down colour)
+                                (magit-pg-getchar branchdown colour)))
+                    (setq str (magit-pg-getchar
+                               across
+                               (magit-pg-next-colour
+                                colour
+                                (magit-pg-n-to-next-parent trunkc parents))))
+                    (delete-char -1)
+                    (insert (magit-pg-getchar branchdown colour)
+                            (magit-pg-getchar down colour)
+                            str)))
+                 ((member (car trunkc) parents)
+                  (if before-merge
+                      (setq str (magit-pg-getchar across colour))
+                    (setq str (magit-pg-getchar
+                               across
+                               (magit-pg-next-colour
+                                colour
+                                (magit-pg-n-to-next-parent trunkc parents)))))
+                  (insert (magit-pg-getchar branchdown colour)
+                          str))
+                 ((car trunkc)
+                  (insert (magit-pg-getchar down colour)
+                          str))
+                 (t
+                  (insert str str)))))))
           (insert "\n")
           ;; draw rest of trunk merges
           (setq str " ")
@@ -444,24 +458,24 @@ nil
           (when (consp trunk-merges)
             (dolist (trunk trunks)
               (magit-pg-cycle-colour colour magit-pg-n-trunk-colours
-               (cond
-                ((and before-merge (eq merge trunk))
-                 (setq before-merge nil)
-                 (insert (magit-pg-getchar down colour)
-                         str))
-                ((memq trunk trunk-merges)
-                 (if before-merge
-                     (insert (magit-pg-getchar branchright colour)
-                             (magit-pg-getchar bottomright colour))
-                   (delete-char -1)
-                   (insert (magit-pg-getchar bottomleft colour)
-                           (magit-pg-getchar branchleft colour)
-                           str)))
-                (trunk
-                 (insert (magit-pg-getchar down colour)
-                         str))
-                (t
-                 (insert str str)))))
+                (cond
+                 ((and before-merge (eq merge trunk))
+                  (setq before-merge nil)
+                  (insert (magit-pg-getchar down colour)
+                          str))
+                 ((memq trunk trunk-merges)
+                  (if before-merge
+                      (insert (magit-pg-getchar branchright colour)
+                              (magit-pg-getchar bottomright colour))
+                    (delete-char -1)
+                    (insert (magit-pg-getchar bottomleft colour)
+                            (magit-pg-getchar branchleft colour)
+                            str)))
+                 (trunk
+                  (insert (magit-pg-getchar down colour)
+                          str))
+                 (t
+                  (insert str str)))))
             (insert "\n")))))
 
     trunks))
