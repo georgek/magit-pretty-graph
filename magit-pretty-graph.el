@@ -198,7 +198,8 @@ nil
   (1+ (mod (+ (1- current) n) magit-pg-n-trunk-colours)))
 
 (defun magit-pg-repo (&optional directory)
-  (interactive)
+  (interactive
+   (list (read-directory-name "Repository: ")))
   (with-current-buffer (get-buffer-create
                         magit-pg-output-buffer-name)
     (erase-buffer)
