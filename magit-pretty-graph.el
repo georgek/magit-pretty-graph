@@ -499,7 +499,7 @@ nil
                   (setq str (magit-pg-getchar
                              across
                              (magit-pg-next-colour
-                              colour (1+ (position 'same (cdr otrunkc))))))
+                              colour (1+ (cl-position 'same (cdr otrunkc))))))
                   (insert (magit-pg-getchar branchright colour)
                           str))
                  ((eq (car otrunkc) 'same)
@@ -508,7 +508,7 @@ nil
                         (setq str (magit-pg-getchar
                                    across
                                    (magit-pg-next-colour
-                                    colour (1+ (position 'same (cdr otrunkc))))))
+                                    colour (1+ (cl-position 'same (cdr otrunkc))))))
                         (insert (magit-pg-getchar branchup colour) str))
                     (setq str " ")
                     (insert (magit-pg-getchar bottomright colour)
