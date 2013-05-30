@@ -38,13 +38,16 @@
 
 (require 'cl-lib)
 
-(defvar magit-pg-command
+(defconst magit-pg-command
   (concat "git --no-pager log --date-order --decorate=full "
           "--pretty=format:\"%H%x00%P%x00%h%x00%an%x00%ar%x00%s%x00%d\" "
-          "--all"))
+          "--all")
+  "The command used to fill the raw output buffer.")
 
-(defconst magit-pg-buffer-name "*magit-prettier-graph*")
-(defconst magit-pg-output-buffer-name "*magit-prettier-graph-output*")
+(defconst magit-pg-buffer-name "*magit-prettier-graph*"
+  "The name of the buffer that the graph gets drawn in.")
+(defconst magit-pg-output-buffer-name "*magit-prettier-graph-output*"
+  "The name of the buffer where raw output from git goes.")
 
 (defmacro magit-pg-dolistc (spec &rest body)
   "Loop over a list.
