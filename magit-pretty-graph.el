@@ -533,9 +533,12 @@ nil
                                         ; unused)
     ;; print graph
     (with-current-buffer (get-buffer-create magit-pg-buffer-name)
-      (setq mode-name "Magit Log")
+      (read-only-mode -1)
       (erase-buffer)
-      (toggle-truncate-lines 1)
+      (kill-all-local-variables)
+      (setq truncate-lines t
+            mode-name "Magit Log")
+      (buffer-disable-undo)
       
       (dolist (commit commits)
         ;; print commit
@@ -550,7 +553,9 @@ nil
           (magit-pg-dolistc (trunkc trunks)
             (when (car trunkc)
               (setq last trunkc)))
-          (setcdr last nil))))))
+          (setcdr last nil)))
+
+      (read-only-mode))))
 
 (provide 'magit-pretty-graph)
 ;;; magit-pretty-graph.el ends here
