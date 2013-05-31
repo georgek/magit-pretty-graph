@@ -246,7 +246,8 @@ nil
 (defun magit-pg-refs-string (commit)
   (let (refs)
     (setq refs (or (string-empty-p (magit-pg-refs commit))
-                   (split-string (substring (magit-pg-refs commit) 2 -1) ", " t)))
+                   (split-string (substring (magit-pg-refs commit) 2 -1)
+                                 ", " t)))
     (when (consp refs)
       (concat
        " "
@@ -511,7 +512,8 @@ nil
                         (setq str (magit-pg-getchar
                                    across
                                    (magit-pg-next-colour
-                                    colour (1+ (cl-position 'same (cdr otrunkc))))))
+                                    colour (1+ (cl-position 'same
+                                                            (cdr otrunkc))))))
                         (insert (magit-pg-getchar branchup colour) str))
                     (setq str " ")
                     (insert (magit-pg-getchar bottomright colour)
