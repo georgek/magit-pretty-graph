@@ -41,7 +41,7 @@
 (defconst magit-pg-command
   (concat "git --no-pager log --date-order --decorate=full "
           "--pretty=format:\"%H%x00%P%x00%h%x00%an%x00%ar%x00%s%x00%d\" "
-          "--all")
+          "--all -n 100")
   "The command used to fill the raw output buffer.")
 
 (defconst magit-pg-buffer-name "*magit-prettier-graph*"
@@ -272,7 +272,7 @@ nil
 (defun magit-pg-commit-string (commit)
   (concat
    (propertize (magit-pg-shorthash commit) 'face 'magit-log-sha1)
-   (magit-pg-refs-string commit)
+   ;; (magit-pg-refs-string commit)
    " ("
    (propertize (truncate-string-to-width
                 (magit-pg-author commit)
@@ -568,34 +568,32 @@ nil
     output))
 
 (defun magit-pg (buffer)
-  (let ((commits (magit-pg-parse-output buffer))
-        (trunks (list)))                ; this holds the hashes of the next
-                                        ; node on each trunk (nil if trunk is
-                                        ; unused)
+  (let (output
+        (commits (magit-pg-parse-output buffer)))
+    (setq magit-pg-trunks (list))
     ;; print graph
     (with-current-buffer (get-buffer-create magit-pg-buffer-name)
       (read-only-mode -1)
       (erase-buffer)
-      (kill-all-local-variables)
-      (setq truncate-lines t
-            mode-name "Magit Log")
-      (buffer-disable-undo)
-      
       (dolist (commit commits)
         ;; print commit
-        (setq trunks (magit-pg-print-commit trunks commit))
+        (insert (magit-pg-print-commit commit)
+                (magit-pg-commit-string commit)
+                "\n")
         ;; print merge and prepare parents
-        (setq trunks (magit-pg-print-merge
-                      trunks commit (magit-pg-parents commit)))
+        (setq output (magit-pg-print-merge commit (magit-pg-parents commit)))
+        (unless (string-empty-p output)
+          (insert output "\n"))
         ;; print branches and consolidate duplicate parents
-        (setq trunks (magit-pg-print-branches trunks))
+        (setq output (magit-pg-print-branches))
+        (unless (string-empty-p output)
+          (insert output "\n"))
         ;; remove nils at end
-        (let ((last trunks))
-          (magit-pg-dolistc (trunkc trunks)
+        (let ((last magit-pg-trunks))
+          (magit-pg-dolistc (trunkc magit-pg-trunks)
             (when (car trunkc)
               (setq last trunkc)))
           (setcdr last nil)))
-
       (read-only-mode))))
 
 (provide 'magit-pretty-graph)
