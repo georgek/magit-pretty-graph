@@ -250,6 +250,19 @@ nil
 (defun magit-pg-refs (commit)
   (nth 4 (car commit)))
 
+(defun magit-pg-parse-refs (string)
+  (let ((refs (or (string-empty-p string)
+                  (split-string (substring string 2 -1)
+                                ", " t))))
+    (unless refs
+      (remq nil (mapcar
+                 (lambda (s)
+                   (and (not
+                         (or (string= s "tag:")
+                             (string= s "HEAD")))
+                        s))
+                 refs)))))
+
 (defun magit-pg-refs-string (commit)
   (let (refs)
     (setq refs (or (string-empty-p (magit-pg-refs commit))
@@ -300,7 +313,11 @@ nil
                                        #'magit-pg-parse-hash
                                        (split-string (caddr commit) " " t)))
                  commit)
-             commits)))))
+             commits))
+      (mapc #'(lambda (commit)
+                (setcar (nthcdr 4 (car commit))
+                        (magit-pg-parse-refs (magit-pg-refs commit))))
+            commits))))
 
 (defun magit-pg-print-commit (commit)
   "Prints a commit node, returns new trunks, destroys trunks input."
