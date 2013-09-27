@@ -591,6 +591,7 @@ nil
     ;; print graph
     (with-current-buffer (get-buffer-create magit-pg-buffer-name)
       (read-only-mode -1)
+      (setq truncate-lines t)
       (erase-buffer)
       (dolist (commit commits)
         ;; print commit
