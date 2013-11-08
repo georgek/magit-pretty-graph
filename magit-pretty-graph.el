@@ -222,11 +222,12 @@ nil
   (pop-to-buffer magit-pg-buffer-name))
 
 (defun magit-pg-parse-hash (hash-str)
-  (let (hash)
+  (let ((hash (make-vector 4 0)))
     (dotimes (i 4)
-      (push (string-to-number
-             (substring hash-str (* i 10) (+ (* i 10) 10)) 16)
-            hash))
+      (aset hash i
+            (string-to-number
+             (substring hash-str (* i 10) (+ (* i 10) 10))
+             16)))
     hash))
 
 (defun magit-pg-hash (commit)
