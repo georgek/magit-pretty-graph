@@ -218,8 +218,8 @@ nil
      magit-pg-command
      nil
      magit-pg-output-buffer-name))
-  (magit-pg magit-pg-output-buffer-name)
-  (pop-to-buffer magit-pg-buffer-name))
+  (magit-pg-2 magit-pg-output-buffer-name)
+  (pop-to-buffer magit-pg-output-buffer-name))
 
 (defun magit-pg-parse-hash (hash-str)
   (let ((hash (make-vector 4 0)))
@@ -296,6 +296,16 @@ nil
    (propertize (substring (magit-pg-date commit) 0 -4) 'face 'magit-pg-date)
    ") "
    (magit-pg-message commit)))
+
+(defun magit-pg-commit-string-2 (commit)
+  (mapconcat
+   #'identity
+   (list (magit-pg-shorthash commit)
+         (magit-pg-author commit)
+         (magit-pg-date commit)
+         (magit-pg-message commit)
+         (magit-pg-refs commit))
+   " "))
 
 (defun magit-pg-parse-output (buffer)
   (with-current-buffer buffer
@@ -614,6 +624,33 @@ nil
               (setq last trunkc)))
           (setcdr last nil)))
       (read-only-mode))))
+
+(defun magit-pg-2 (buffer)
+  (let (output
+        (commits (magit-pg-parse-output buffer)))
+    (setq magit-pg-trunks (list))
+    ;; print graph
+    (with-current-buffer buffer
+      (erase-buffer)
+      (dolist (commit commits)
+        ;; print commit
+        (insert (magit-pg-print-commit commit) " "
+                (magit-pg-commit-string-2 commit)
+                "\n")
+        ;; print merge and prepare parents
+        (setq output (magit-pg-print-merge commit (magit-pg-parents commit)))
+        (unless (string-empty-p output)
+          (insert output "     \n"))
+        ;; print branches and consolidate duplicate parents
+        (setq output (magit-pg-print-branches))
+        (unless (string-empty-p output)
+          (insert output "     \n"))
+        ;; remove nils at end
+        (let ((last magit-pg-trunks))
+          (magit-pg-dolistc (trunkc magit-pg-trunks)
+            (when (car trunkc)
+              (setq last trunkc)))
+          (setcdr last nil))))))
 
 (provide 'magit-pretty-graph)
 ;;; magit-pretty-graph.el ends here
