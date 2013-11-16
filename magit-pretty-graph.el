@@ -633,7 +633,7 @@ nil
     (setq magit-pg-trunks (list))
     ;; print graph
     (with-current-buffer buffer
-      (erase-buffer)
+      (delete-region (point-min) (point-max))
       (dolist (commit commits)
         ;; print commit
         (insert (magit-pg-print-commit commit) " "
