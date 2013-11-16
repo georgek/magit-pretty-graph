@@ -315,6 +315,8 @@ nil
                     #'(lambda (line)
                         (split-string line "\0" nil))
                     (split-string (buffer-string) "\n" t))))
+      (when (string= (substring (caar commits) 0 7) "Commits")
+        (pop commits))
       (setq commits
             (mapcar
              #'(lambda (commit)
