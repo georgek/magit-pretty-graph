@@ -1,3 +1,4 @@
+;;; -*-coding: utf-8 -*-
 ;;; testing routines for pretty graph
 (require 'cl-lib)
 

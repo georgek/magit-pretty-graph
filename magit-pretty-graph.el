@@ -1,3 +1,4 @@
+;;; -*-coding: utf-8 -*-
 ;;; magit-pretty-graph.el --- a pretty git graph drawn with Emacs lisp
 
 ;; Copyright (C) 2013  George Kettleborough
