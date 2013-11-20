@@ -286,7 +286,7 @@ nil
 (defun magit-pg-commit-string (commit)
   (concat
    (propertize (magit-pg-shorthash commit) 'face 'magit-log-sha1)
-   ;; (magit-pg-refs-string commit)
+   (magit-pg-refs commit)
    " ("
    (propertize (truncate-string-to-width
                 (magit-pg-author commit)
