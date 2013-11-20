@@ -326,11 +326,7 @@ nil
                                        #'magit-pg-parse-hash
                                        (split-string (caddr commit) " " t)))
                  commit)
-             commits))
-      (mapc #'(lambda (commit)
-                (setcar (nthcdr 4 (car commit))
-                        (magit-pg-parse-refs (magit-pg-refs commit))))
-            commits))))
+             commits)))))
 
 (defun magit-pg-print-commit (commit)
   "Prints a commit node, returns new trunks, destroys trunks input."
