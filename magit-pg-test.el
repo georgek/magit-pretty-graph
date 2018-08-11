@@ -11,9 +11,7 @@
   (declare (indent 2))
   (let ((vars (list))
         (test-sym (intern (concat "magit-pg-testfun-" (symbol-name name))))
-        (output-str (apply #'concat
-                           (mapcar #'(lambda (s) (concat s "\n"))
-                                   output)))
+        (output-str (mapconcat #'identity output "\n"))
         (output-sym (gensym)))
     (mapc #'(lambda (form) (when (eq (car form) 'setq) (push (cadr form) vars)))
           body)
@@ -27,7 +25,7 @@
              (erase-buffer)
              (toggle-truncate-lines 1)
              ,@body
-             (string= (buffer-string) ,output-sym))))
+             (string= (substring-no-properties (buffer-string)) ,output-sym))))
        (push ',test-sym magit-pg-tests)
        (setq magit-pg-tests (cl-remove-duplicates magit-pg-tests)))))
 
@@ -38,39 +36,43 @@
 (defun magit-pg-test-empty-commit (hash parents)
   "Makes a valid commit with given hash (an object) and
 parents (a list)."
-  (nconc (list (list "" "" "" "")
-               hash)
-         parents))
+  (make-magit-pg-commit
+   :hash hash
+   :parent-hashes parents))
 
-(magit-pg-deftest mergeleft ("├┬│─┬─╮ "
+(magit-pg-deftest mergeleft ("├┬│─┬─╮  "
                              "│╰┤ │ │ ")
-  (setq trunks (list 1 2))
   (setq commit (magit-pg-test-empty-commit 1 (list 5 2 3 4)))
-  (magit-pg-print-merge trunks commit (magit-pg-parents commit)))
+  (let ((magit-pg-trunks (list 1 2)))
+   (insert
+    (magit-pg-print-merge commit (magit-pg-commit-parent-hashes commit)))))
 
-(magit-pg-deftest mergemid ("│╭┼╮│ "
+(magit-pg-deftest mergemid ("│╭┼╮│  "
                             "├╯│╰┤ ")
-  (setq trunks (list 1 2 3))
   (setq commit (magit-pg-test-empty-commit 2 (list 4 1 3)))
-  (magit-pg-print-merge trunks commit (magit-pg-parents commit)))
+  (let ((magit-pg-trunks (list 1 2 3)))
+   (insert
+    (magit-pg-print-merge commit (magit-pg-commit-parent-hashes commit)))))
 
-(magit-pg-deftest mergeright ("╭─┬─│┬┤ "
+(magit-pg-deftest mergeright ("╭─┬─│┬┤  "
                               "│ │ ├╯│ ")
-  (setq trunks (list nil nil 3 4))
   (setq commit (magit-pg-test-empty-commit 4 (list 5 1 2 3)))
-  (magit-pg-print-merge trunks commit (magit-pg-parents commit)))
+  (let ((magit-pg-trunks (list nil nil 3 4)))
+   (insert
+    (magit-pg-print-merge commit (magit-pg-commit-parent-hashes commit)))))
 
 (magit-pg-deftest branchleft ("├─│─┴─│─┴─│─┴─│─╯ ")
-  (setq trunks (list 1 2 1 3 1 4 1 5 1))
-  (magit-pg-print-branches trunks))
+  (let ((magit-pg-trunks (list 1 2 1 3 1 4 1 5 1)))
+    (insert
+     (magit-pg-print-branches))))
 
-(magit-pg-deftest branchmulti ("├─┴─│─│─│─╯ │ │ │ "
-                               "│   ├─┴─│───╯ │ │ "
+(magit-pg-deftest branchmulti ("├─┴─│─│─│─╯ │ │ │  "
+                               "│   ├─┴─│───╯ │ │  "
                                "│   │   ├─────┴─╯ ")
-  (setq trunks (list 1 1 2 2 3 1 2 3 3))
-  (magit-pg-print-branches trunks))
+  (let ((magit-pg-trunks (list 1 1 2 2 3 1 2 3 3)))
+    (insert
+     (magit-pg-print-branches))))
 
 (defun magit-pg-test-alltests ()
-  (reduce #'(lambda (t1 t2) (and t1 t2))
+  (cl-reduce #'(lambda (t1 t2) (and t1 t2))
           (mapcar #'funcall magit-pg-tests)))
-
