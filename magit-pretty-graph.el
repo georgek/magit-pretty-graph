@@ -231,27 +231,6 @@ nil
              16)))
     hash))
 
-(defun magit-pg-hash (commit)
-  (cadr commit))
-
-(defun magit-pg-parents (commit)
-  (cddr commit))
-
-(defun magit-pg-shorthash (commit)
-  (nth 0 (car commit)))
-
-(defun magit-pg-author (commit)
-  (nth 1 (car commit)))
-
-(defun magit-pg-date (commit)
-  (nth 2 (car commit)))
-
-(defun magit-pg-message (commit)
-  (nth 3 (car commit)))
-
-(defun magit-pg-refs (commit)
-  (nth 4 (car commit)))
-
 (defun magit-pg-parse-refs (string)
   (let ((refs (or (string-empty-p string)
                   (split-string (substring string 2 -1)
@@ -267,8 +246,8 @@ nil
 
 (defun magit-pg-refs-string (commit)
   (let (refs)
-    (setq refs (or (string-empty-p (magit-pg-refs commit))
-                   (split-string (substring (magit-pg-refs commit) 2 -1)
+    (setq refs (or (string-empty-p (magit-pg-commit-decoration commit))
+                   (split-string (substring (magit-pg-commit-decoration commit) 2 -1)
                                  ", " t)))
     (when (consp refs)
       (concat
@@ -286,69 +265,71 @@ nil
 
 (defun magit-pg-commit-string (commit)
   (concat
-   (propertize (magit-pg-shorthash commit) 'face 'magit-log-sha1)
-   (magit-pg-refs commit)
+   (propertize (magit-pg-commit-short-hash commit) 'face 'magit-log-sha1)
+   (magit-pg-commit-decoration commit)
    " ("
    (propertize (truncate-string-to-width
-                (magit-pg-author commit)
+                (magit-pg-commit-author commit)
                 16 nil nil "...")
                'face 'magit-pg-author)
    " "
-   (propertize (substring (magit-pg-date commit) 0 -4) 'face 'magit-pg-date)
+   (propertize (substring (magit-pg-commit-date commit) 0 -4) 'face 'magit-pg-date)
    ") "
-   (magit-pg-message commit)))
+   (magit-pg-commit-description commit)))
 
 (defun magit-pg-commit-string-2 (commit)
   (mapconcat
    #'identity
-   (list (magit-pg-shorthash commit)
-         (magit-pg-author commit)
-         (magit-pg-date commit)
-         (magit-pg-message commit)
-         (magit-pg-refs commit))
+   (list (magit-pg-commit-short-hash commit)
+         (magit-pg-commit-author commit)
+         (magit-pg-commit-date commit)
+         (magit-pg-commit-description commit)
+         (magit-pg-commit-decoration commit))
    " "))
+
+(cl-defstruct magit-pg-commit
+  hash parent-hashes short-hash author date description decoration)
+
+(defun magit-pg-parse-commit (line)
+  (let ((items (split-string line "\0" nil)))
+    (make-magit-pg-commit
+     :hash (magit-pg-parse-hash (pop items))
+     :parent-hashes (mapcar #'magit-pg-parse-hash
+			    (split-string (pop items) " " t))
+     :short-hash (pop items)
+     :author (pop items)
+     :date (pop items)
+     :description (pop items)
+     :decoration (pop items))))
 
 (defun magit-pg-parse-output (buffer)
   (with-current-buffer buffer
     (when (string= (substring (buffer-string) 0 5) "fatal")
       (error "Git error, see output buffer for details"))
-    (let ((commits (mapcar
-                    #'(lambda (line)
-                        (split-string line "\0" nil))
-                    (split-string (buffer-string) "\n" t))))
-      (when (string= (substring (caar commits) 0 7) "Commits")
-        (pop commits))
-      (setq commits
-            (mapcar
-             #'(lambda (commit)
-                 (setq commit (cons (cddr commit) commit))
-                 (setcar (cdr commit) (magit-pg-parse-hash (cadr commit)))
-                 (setcdr (cdr commit) (mapcar
-                                       #'magit-pg-parse-hash
-                                       (split-string (caddr commit) " " t)))
-                 commit)
-             commits)))))
+    (mapcar
+     #'magit-pg-parse-commit
+     (split-string (buffer-string) "\n" t))))
 
 (defun magit-pg-print-commit (commit)
   "Prints a commit node, returns new trunks, destroys trunks input."
   (when (null magit-pg-trunks) (setq magit-pg-trunks (list nil)))
   (let* ((output "")
-         (head (not (member (magit-pg-hash commit) magit-pg-trunks)))
-         (tail (and (not head) (null (magit-pg-parents commit))))
+         (head (not (member (magit-pg-commit-hash commit) magit-pg-trunks)))
+         (tail (and (not head) (null (magit-pg-commit-parent-hashes commit))))
          (colour 1))
     (when head
       (magit-pg-dolistc (trunkc magit-pg-trunks)
         (cond
          ((null (car trunkc))
-          (setcar trunkc (magit-pg-hash commit))
+          (setcar trunkc (magit-pg-commit-hash commit))
           (return))
          ((null (cdr trunkc))
-          (setcdr trunkc (cons (magit-pg-hash commit) nil))
+          (setcdr trunkc (cons (magit-pg-commit-hash commit) nil))
           (return)))))
     (dolist (trunk magit-pg-trunks)
       (magit-pg-cycle-colour colour magit-pg-n-trunk-colours
         (cond
-         ((equal trunk (magit-pg-hash commit))
+         ((equal trunk (magit-pg-commit-hash commit))
           (cond
            (head
             (magit-pg-stradd output
@@ -387,7 +368,7 @@ nil
         merge
         (trunk-merges (list)))
     (magit-pg-dolistc (trunkc magit-pg-trunks)
-      (when (equal (car trunkc) (magit-pg-hash commit))
+      (when (equal (car trunkc) (magit-pg-commit-hash commit))
         (setcar trunkc (pop parents))
         (setq merge (car trunkc))
         (return)))
@@ -609,7 +590,7 @@ nil
                 (magit-pg-commit-string commit)
                 "\n")
         ;; print merge and prepare parents
-        (setq output (magit-pg-print-merge commit (magit-pg-parents commit)))
+        (setq output (magit-pg-print-merge commit (magit-pg-commit-parent-hashes commit)))
         (unless (string-empty-p output)
           (insert output "\n"))
         ;; print branches and consolidate duplicate parents
@@ -637,7 +618,7 @@ nil
                 (magit-pg-commit-string-2 commit)
                 "\n")
         ;; print merge and prepare parents
-        (setq output (magit-pg-print-merge commit (magit-pg-parents commit)))
+        (setq output (magit-pg-print-merge commit (magit-pg-commit-parent-hashes commit)))
         (unless (string-empty-p output)
           (insert output "     \n"))
         ;; print branches and consolidate duplicate parents
