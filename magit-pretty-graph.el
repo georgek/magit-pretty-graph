@@ -68,7 +68,7 @@ nil
      (let ((,(car spec) ,(cadr spec)))
        (while (consp ,(car spec))
          ,@body
-         (setq ,(car spec) (rest ,(car spec)))))))
+         (setq ,(car spec) (cl-rest ,(car spec)))))))
 
 (defmacro magit-pg-stradd (string &rest newstrings)
   (declare (indent 1))
@@ -190,7 +190,7 @@ nil
       (setq ll (car c))
       (when (null (cdr c))
         (setcdr c l)
-        (return l)))))
+        (cl-return l)))))
 
 (defconst magit-pg-colour-ring (magit-pg-make-ring 5))
 
@@ -322,10 +322,10 @@ nil
         (cond
          ((null (car trunkc))
           (setcar trunkc (magit-pg-commit-hash commit))
-          (return))
+          (cl-return))
          ((null (cdr trunkc))
           (setcdr trunkc (cons (magit-pg-commit-hash commit) nil))
-          (return)))))
+          (cl-return)))))
     (dolist (trunk magit-pg-trunks)
       (magit-pg-cycle-colour colour magit-pg-n-trunk-colours
         (cond
@@ -356,10 +356,11 @@ nil
 (defun magit-pg-n-to-next-parent (trunks parents)
   "Returns number of trunks until next parent."
   (let ((n 0))
-    (dolist (trunk (cdr trunks))
-      (setq n (1+ n))
-      (when (member trunk parents)
-        (return)))
+    (cl-block
+     (dolist (trunk (cdr trunks))
+       (setq n (1+ n))
+       (when (member trunk parents)
+         (cl-return))))
     n))
 
 (defun magit-pg-print-merge (commit parents)
@@ -371,7 +372,7 @@ nil
       (when (equal (car trunkc) (magit-pg-commit-hash commit))
         (setcar trunkc (pop parents))
         (setq merge (car trunkc))
-        (return)))
+        (cl-return)))
 
     (when (consp parents)
       ;; deal with merge
@@ -528,7 +529,7 @@ nil
     (magit-pg-dolistc (trunkc magit-pg-trunks)
       ;; find last element with same hash
       (unless (null (car trunkc))
-        (magit-pg-dolistc (otrunkc (rest trunkc))
+        (magit-pg-dolistc (otrunkc (cl-rest trunkc))
           (when (equal (car trunkc) (car otrunkc))
             (setq l otrunkc)
             (setcar otrunkc 'same)))
