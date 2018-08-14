@@ -1,27 +1,6 @@
 (defvar svg-test-width 17.0 "Width of SVG blocks.")
 (defvar svg-test-height 22.0 "Height of SVG blocks.")
 
-(defmacro svg-test-defshape (name &rest body)
-  (declare (indent 1))
-  `(defun ,(intern (concat "svg-test-insert-" (symbol-name name))) ()
-     (let ((svg (svg-create svg-test-width svg-test-height)))
-       ,@body
-       (insert-image (svg-image svg)))))
-
-(svg-test-defshape commit
-  (svg-line svg
-	    (/ svg-test-width 2) 0
-	    (/ svg-test-width 2) svg-test-height
-	    :stroke-color 'white)
-  (svg-circle svg
-	      (/ svg-test-width 2)
-	      (- (/ svg-test-height 2) 2)
-	      (/ (1- svg-test-width) 2)
-	      :stroke-color 'black :fill-color 'white))
-
-(defvar svg-test-layer-1-items '(:n :ne :e :se :s :sw :w :nw))
-(defvar svg-test-layer-2-items '(:commit))
-
 (defvar svg-test-components (make-hash-table)  
   "List of pairs containing component and layer")
 
@@ -31,8 +10,12 @@
   "Supported simple draw commands and the actual corresponding function.")
 
 (defvar svg-test-draw-shortcuts
-  '((:middlex . (/ svg-test-width 2))
-    (:middley . (/ svg-test-height 2)))
+  '((:xmid . (/ svg-test-width 2))
+    (:ymid . (/ svg-test-height 2))
+    (:top . 0)
+    (:bottom . svg-test-height)
+    (:left . 0)
+    (:right . svg-test-width))
   "Supported shortcuts for use in defining components.")
 
 (defun svg-test-draw-command (list svg-symbol)
@@ -41,9 +24,7 @@
 	       (cdr list))))
     (when (null command)
       (error "SVG draw command not found: %s" (car list)))
-    `(,command ,svg-symbol ,@args)
-    )
-  )
+    `(,command ,svg-symbol ,@args)))
 
 (defmacro svg-test-defcomponent (name layer &rest body)
   (declare (indent 2))
@@ -58,59 +39,50 @@
 		   body)))))
 
 (svg-test-defcomponent :n 1
-  (svg-line svg
-	    (/ svg-test-width 2) 0
-	    (/ svg-test-width 2) (/ svg-test-height 2)
-	    :stroke-color 'white))
+  (:line :xmid :top
+	 :xmid :ymid
+	 :stroke-color 'white))
 
 (svg-test-defcomponent :ne 1
-  (svg-line svg
-	    svg-test-width 0
-	    (/ svg-test-width 2) (/ svg-test-height 2)
-	    :stroke-color 'white))
+  (:line :right :top
+	 :xmid :ymid
+	 :stroke-color 'white))
 
 (svg-test-defcomponent :e 1
-  (svg-line svg
-	    svg-test-width (/ svg-test-height 2)
-	    (/ svg-test-width 2) (/ svg-test-height 2)
-	    :stroke-color 'white))
+  (:line :right :ymid
+	 :xmid :ymid
+	 :stroke-color 'white))
 
 (svg-test-defcomponent :se 1
-  (svg-line svg
-	    svg-test-width svg-test-height
-	    (/ svg-test-width 2) (/ svg-test-height 2)
-	    :stroke-color 'white))
+  (:line :right :bottom
+	 :xmid :ymid
+	 :stroke-color 'white))
 
 (svg-test-defcomponent :s 1
-  (svg-line svg
-	    (/ svg-test-width 2) svg-test-height
-	    (/ svg-test-width 2) (/ svg-test-height 2)
-	    :stroke-color 'white))
+  (:line :xmid :bottom
+	 :xmid :ymid
+	 :stroke-color 'white))
 
 (svg-test-defcomponent :sw 1
-  (svg-line svg
-	    0 svg-test-height
-	    (/ svg-test-width 2) (/ svg-test-height 2)
-	    :stroke-color 'white))
+  (:line :left :bottom
+	 :xmid :ymid
+	 :stroke-color 'white))
 
 (svg-test-defcomponent :w 1
-  (svg-line svg
-	    0 (/ svg-test-height 2)
-	    (/ svg-test-width 2) (/ svg-test-height 2)
-	    :stroke-color 'white))
+  (:line :left :ymid
+	 :xmid :ymid
+	 :stroke-color 'white))
 
 (svg-test-defcomponent :nw 1
-  (svg-line svg
-	    0 0
-	    (/ svg-test-width 2) (/ svg-test-height 2)
-	    :stroke-color 'white))
+  (:line :left :top
+	 :xmid :ymid
+	 :stroke-color 'white))
 
 (svg-test-defcomponent :commit 2
-  (svg-circle svg
-	      (/ svg-test-width 2)
-	      (/ svg-test-height 2)
-	      (/ svg-test-width 4)
-	      :stroke-color 'black :fill-color 'white))
+  (:circle :xmid
+	   :ymid
+	   (/ svg-test-width 4)
+	   :stroke-color 'black :fill-color 'white))
 
 (svg-test-defcomponent :blank 0)
 
