@@ -29,6 +29,7 @@
 ;; Run `svg-test-repo'
 
 ;;; Code:
+(require 'svg)
 
 (defvar svg-test-debug nil)
 
