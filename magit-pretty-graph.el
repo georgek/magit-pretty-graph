@@ -223,7 +223,8 @@ nil
      nil
      magit-pg-output-buffer-name))
   (magit-pg magit-pg-output-buffer-name)
-  (pop-to-buffer magit-pg-buffer-name))
+  (pop-to-buffer magit-pg-buffer-name)
+  (beginning-of-buffer))
 
 (defun magit-pg-parse-hash (hash-str)
   (let ((hash (make-vector 4 0)))
