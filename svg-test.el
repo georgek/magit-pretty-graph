@@ -76,17 +76,9 @@
 (svg-test-defcomponent :n 1
   (:line :xmid :top
 	 :xmid :ymid
-	 :stroke-color 'black
-	 :stroke-width 3)
-  (:line :xmid :top
-	 :xmid :ymid
 	 :stroke-color 'white))
 
 (svg-test-defcomponent :ne 1
-  (:line :right :top
-	 :xmid :ymid
-	 :stroke-color 'black
-	 :stroke-width 3)
   (:line :right :top
 	 :xmid :ymid
 	 :stroke-color 'white))
@@ -94,17 +86,9 @@
 (svg-test-defcomponent :e 1
   (:line :right :ymid
 	 :xmid :ymid
-	 :stroke-color 'black
-	 :stroke-width 3)
-  (:line :right :ymid
-	 :xmid :ymid
 	 :stroke-color 'white))
 
 (svg-test-defcomponent :se 1
-  (:line :right :bottom
-	 :xmid :ymid
-	 :stroke-color 'black
-	 :stroke-width 3)
   (:line :right :bottom
 	 :xmid :ymid
 	 :stroke-color 'white))
@@ -112,17 +96,9 @@
 (svg-test-defcomponent :s 1
   (:line :xmid :bottom
 	 :xmid :ymid
-	 :stroke-color 'black
-	 :stroke-width 3)
-  (:line :xmid :bottom
-	 :xmid :ymid
 	 :stroke-color 'white))
 
 (svg-test-defcomponent :sw 1
-  (:line :left :bottom
-	 :xmid :ymid
-	 :stroke-color 'black
-	 :stroke-width 3)
   (:line :left :bottom
 	 :xmid :ymid
 	 :stroke-color 'white))
@@ -130,19 +106,21 @@
 (svg-test-defcomponent :w 1
   (:line :left :ymid
 	 :xmid :ymid
-	 :stroke-color 'black
-	 :stroke-width 3)
-  (:line :left :ymid
-	 :xmid :ymid
 	 :stroke-color 'white))
 
 (svg-test-defcomponent :nw 1
   (:line :left :top
 	 :xmid :ymid
-	 :stroke-color 'black
-	 :stroke-width 3)
-  (:line :left :top
-	 :xmid :ymid
+	 :stroke-color 'white))
+
+(svg-test-defcomponent :top-to-left 1
+  (:line :xmid :top
+	 :left :ymid
+	 :stroke-color 'white))
+
+(svg-test-defcomponent :across 1
+  (:line :left :ymid
+	 :right :ymid
 	 :stroke-color 'white))
 
 (svg-test-defcomponent :commit 2
@@ -170,7 +148,7 @@
 
 (defun svg-test-make-svg (&rest components)
   "Makes an SVG with the given components"
-  (let ((svg (svg-create svg-test-width svg-test-height)))
+  (let ((svg (svg-create svg-test-width svg-test-height :stroke-width 1)))
     (apply #'svg-test-add-to-svg svg components)))
 
 (defun svg-test-put-svg (&rest components)
@@ -227,21 +205,32 @@ previous commits that we are still waiting for"
 (defun svg-test-format-hashes (hashes)
   (mapconcat #'magit-pg-format-hash hashes ", "))
 
-(defun svg-test-apply-edge (svgs i j)
+(defun svg-test-apply-edge (svgs n-outgoing-edges i j)
   "Draws edge in this row to connect column i to column j (as a
-side effect) and returns the direction of the outgoing edge"
+side effect) and returns a list of edges to draw on the next
+commit line"
   ;; FIXME: this will break if difference between i and j is greater than 1
   ;; (ie. cause by octopus merges, new heads and far away branches)
-  (let ((svg (nth i svgs)))
+  (let ((svg (nth i svgs))
+	(outgoing-directions (make-list n-outgoing-edges :blank)))
    (cond ((= i j)
 	  (svg-test-add-to-svg svg :s)
-	  :n)
-	 ((> i j)
+	  (setf (nth j outgoing-directions) :n))
+	 ((= (- i j) 1)
 	  (svg-test-add-to-svg svg :sw)
-	  :ne)
-	 ((< i j)
+	  (setf (nth j outgoing-directions) :ne))
+	 ((= (- i j) -1)
 	  (svg-test-add-to-svg svg :se)
-	  :nw))))
+	  (setf (nth j outgoing-directions) :nw))
+	 ((> (- i j) 1)
+	  (svg-test-add-to-svg svg :s)
+	  (setf (nth i outgoing-directions) :top-to-left)
+	  (cl-loop
+	   for n from (1+ j) below i do
+	   (setf (nth n outgoing-directions) :across))
+	  (setf (nth j outgoing-directions) :e))
+	 (t :blank))
+   outgoing-directions))
 
 (defun svg-test-fill-in-commit-line (commit-line incoming-directions)
   "Fills in the graph for the SVGs in the commit line (as a side
@@ -269,14 +258,16 @@ side effect) and returns the direction of the outgoing edge"
 	 (let ((parent-hashes (magit-pg-commit-parent-hashes commit)))
 	   (cl-loop
 	    for parent-hash in parent-hashes do
-	    (let ((j (-elem-index parent-hash outgoing-hashes)))
-	      (push (svg-test-apply-edge svgs i j)
-		    (nth j outgoing-directions)))))
+	    (let* ((j (-elem-index parent-hash outgoing-hashes))
+		   (new-outgoing-directions (svg-test-apply-edge svgs (length outgoing-hashes) i j)))
+	      (setq outgoing-directions
+		    (-zip-with #'cons new-outgoing-directions outgoing-directions)))))
        ;; connect other trunks
        (let ((j (-elem-index incoming-hash outgoing-hashes)))
 	 (when j
-	   (push (svg-test-apply-edge svgs i j)
-		 (nth j outgoing-directions))))))
+	   (let ((new-outgoing-directions (svg-test-apply-edge svgs (length outgoing-hashes) i j)))
+	     (setq outgoing-directions
+		   (-zip-with #'cons new-outgoing-directions outgoing-directions)))))))
     ;; draw commit
     (svg-test-add-to-svg (nth commit-index svgs) :commit)
     outgoing-directions))
