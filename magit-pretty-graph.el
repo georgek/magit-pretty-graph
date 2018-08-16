@@ -38,6 +38,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(eval-when-compile (require 'subr-x))
 
 (defconst magit-pg-command
   (concat "git --no-pager log --topo-order --decorate=full "
