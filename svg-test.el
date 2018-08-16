@@ -317,7 +317,10 @@ side effect) and returns the direction of the outgoing edge"
 	(insert "\n")))
     (insert "\n")
     (pop-to-buffer "*svg-test*")
-    (beginning-of-buffer)))
+    (beginning-of-buffer)
+    (local-set-key (kbd "g") (lambda ()
+			       (interactive)
+			       (svg-test-draw-repo commits)))))
 
 (defun svg-test-test ()
   (interactive)

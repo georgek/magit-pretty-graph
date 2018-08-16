@@ -224,7 +224,10 @@ nil
      magit-pg-output-buffer-name))
   (magit-pg magit-pg-output-buffer-name)
   (pop-to-buffer magit-pg-buffer-name)
-  (beginning-of-buffer))
+  (beginning-of-buffer)
+  (local-set-key (kbd "g") (lambda ()
+			     (interactive)
+			     (magit-pg-repo directory))))
 
 (defun magit-pg-parse-hash (hash-str)
   (let ((hash (make-vector 4 0)))
