@@ -76,9 +76,17 @@
 (svg-test-defcomponent :n 1
   (:line :xmid :top
 	 :xmid :ymid
+	 :stroke-color 'black
+	 :stroke-width 3)
+  (:line :xmid :top
+	 :xmid :ymid
 	 :stroke-color 'white))
 
 (svg-test-defcomponent :ne 1
+  (:line :right :top
+	 :xmid :ymid
+	 :stroke-color 'black
+	 :stroke-width 3)
   (:line :right :top
 	 :xmid :ymid
 	 :stroke-color 'white))
@@ -86,9 +94,17 @@
 (svg-test-defcomponent :e 1
   (:line :right :ymid
 	 :xmid :ymid
+	 :stroke-color 'black
+	 :stroke-width 3)
+  (:line :right :ymid
+	 :xmid :ymid
 	 :stroke-color 'white))
 
 (svg-test-defcomponent :se 1
+  (:line :right :bottom
+	 :xmid :ymid
+	 :stroke-color 'black
+	 :stroke-width 3)
   (:line :right :bottom
 	 :xmid :ymid
 	 :stroke-color 'white))
@@ -96,9 +112,17 @@
 (svg-test-defcomponent :s 1
   (:line :xmid :bottom
 	 :xmid :ymid
+	 :stroke-color 'black
+	 :stroke-width 3)
+  (:line :xmid :bottom
+	 :xmid :ymid
 	 :stroke-color 'white))
 
 (svg-test-defcomponent :sw 1
+  (:line :left :bottom
+	 :xmid :ymid
+	 :stroke-color 'black
+	 :stroke-width 3)
   (:line :left :bottom
 	 :xmid :ymid
 	 :stroke-color 'white))
@@ -106,9 +130,17 @@
 (svg-test-defcomponent :w 1
   (:line :left :ymid
 	 :xmid :ymid
+	 :stroke-color 'black
+	 :stroke-width 3)
+  (:line :left :ymid
+	 :xmid :ymid
 	 :stroke-color 'white))
 
 (svg-test-defcomponent :nw 1
+  (:line :left :top
+	 :xmid :ymid
+	 :stroke-color 'black
+	 :stroke-width 3)
   (:line :left :top
 	 :xmid :ymid
 	 :stroke-color 'white))
