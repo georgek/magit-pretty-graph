@@ -154,6 +154,8 @@
 (svg-test-defcomponent :blank 0)
 
 (defun svg-test-component-dispatch (svg symbol)
+  (when (null symbol)
+    (setq symbol :blank))
   (let* ((f-name (concat "svg-test-component-" (substring (symbol-name symbol) 1)))
 	 (f (intern-soft f-name)))
     (when (null f)
