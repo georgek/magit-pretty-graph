@@ -262,9 +262,7 @@ side effect) and returns the direction of the outgoing edge"
 		 (svg-test-format-hashes (magit-pg-commit-parent-hashes commit))
 		 (svg-test-format-hashes (svg-test-commit-line-incoming-hashes commit-line))
 		 (svg-test-format-hashes (svg-test-commit-line-outgoing-hashes commit-line)))
-       (format " %s %s"
-	       (or (magit-pg-commit-short-hash commit) (magit-pg-commit-hash commit))
-	       (magit-pg-commit-description commit))))))
+       (format " %s" (magit-pg-commit-string commit))))))
 
 (defun svg-test-draw-repo (commits)
   (with-current-buffer (get-buffer-create "*svg-test*")

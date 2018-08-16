@@ -112,6 +112,14 @@ nil
   :group 'faces
   :group 'magit-pg)
 
+(defface magit-pg-hash
+  '((((class color) (background light))
+     :foreground "coral")
+    (((class color) (background dark))
+     :foreground "chocolate3"))
+  "Face for the author element of the log output."
+  :group 'magit-pg-faces)
+
 (defface magit-pg-author
   '((((class color) (background light))
      :foreground "olive drab")
@@ -259,7 +267,7 @@ nil
 
 (defun magit-pg-commit-string (commit)
   (concat
-   (propertize (magit-pg-commit-short-hash commit) 'face 'magit-log-sha1)
+   (propertize (magit-pg-commit-short-hash commit) 'face 'magit-pg-hash)
    (magit-pg-commit-decoration commit)
    " ("
    (propertize (truncate-string-to-width
