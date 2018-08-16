@@ -236,50 +236,35 @@ nil
     hash))
 
 (defun magit-pg-parse-refs (string)
-  (let ((refs (or (string-empty-p string)
-                  (split-string (substring string 2 -1)
-                                ", " t))))
-    (unless refs
-      (remq nil (mapcar
-                 (lambda (s)
-                   (and (not
-                         (or (string= s "tag:")
-                             (string= s "HEAD")))
-                        s))
-                 refs)))))
+  (let ((refs (and (not (string-empty-p string))
+                   (split-string (substring string 2 -1)
+                                 ", " t))))
+    refs))
 
-(defun magit-pg-refs-string (commit)
-  (let (refs)
-    (setq refs (or (string-empty-p (magit-pg-commit-decoration commit))
-                   (split-string (substring (magit-pg-commit-decoration commit) 2 -1)
-                                 ", " t)))
-    (when (consp refs)
-      (concat
-       " "
-       (mapconcat #'magit-pg-ref-propertize refs " ")))))
+(defun magit-pg-ref-string (ref)
+  (cond ((string-match "HEAD -> refs/heads/\\(.*\\)" ref)
+	 (propertize (match-string 1 ref) 'face 'magit-branch-current))
+	((string-match "refs/heads/\\(.*\\)" ref)
+	 (propertize (match-string 1 ref) 'face 'magit-branch-local))
+	((string-match "refs/remotes/\\(.*\\)" ref)
+	 (propertize (match-string 1 ref) 'face 'magit-branch-remote))
+	(t ref)))
 
-(defun magit-pg-ref-propertize (ref)
-  (let ((face 'magit-log-head-label-default))
-    (cond
-     ((string-match-p ".+/.+" ref)
-      (setq face 'magit-log-head-label-remote))
-     (t
-      (setq face 'magit-log-head-label-local)))
-    (propertize ref 'face face)))
+(defun magit-pg-refs-string (refs)
+  (mapconcat #'magit-pg-ref-string refs " "))
 
 (defun magit-pg-commit-string (commit)
-  (concat
-   (propertize (magit-pg-commit-short-hash commit) 'face 'magit-pg-hash)
-   (magit-pg-commit-decoration commit)
-   " ("
-   (propertize (truncate-string-to-width
-                (magit-pg-commit-author commit)
-                16 nil nil "...")
-               'face 'magit-pg-author)
-   " "
-   (propertize (substring (magit-pg-commit-date commit) 0 -4) 'face 'magit-pg-date)
-   ") "
-   (magit-pg-commit-description commit)))
+  (let ((items (list
+		(propertize (magit-pg-commit-short-hash commit) 'face 'magit-hash)
+		(magit-pg-refs-string (magit-pg-commit-decoration commit))
+		(magit-pg-commit-description commit)
+		(propertize (truncate-string-to-width
+			     (magit-pg-commit-author commit)
+			     16 nil nil "...")
+			    'face 'magit-dimmed)
+		(propertize (substring (magit-pg-commit-date commit) 0 -4)
+			    'face 'magit-dimmed))))
+    (mapconcat #'identity (-remove #'string-empty-p items) " ")))
 
 (cl-defstruct magit-pg-commit
   hash parent-hashes author date description decoration)
@@ -301,7 +286,7 @@ nil
      :author (pop items)
      :date (pop items)
      :description (pop items)
-     :decoration (pop items))))
+     :decoration (magit-pg-parse-refs (pop items)))))
 
 (defun magit-pg-parse-output (buffer)
   (with-current-buffer buffer
