@@ -74,12 +74,6 @@ nil
   (declare (indent 1))
   `(setq ,string (concat ,string ,@newstrings)))
 
-(defmacro magit-pg-with-font-lock-face (face &rest body)
-  (declare (indent 1))
-  `(let ((beg (point)))
-     ,@body
-     (put-text-property beg (point) 'font-lock-face ,face)))
-
 (defmacro magit-pg-defchar (name str)
   `(defconst ,name
      (vector
