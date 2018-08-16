@@ -38,6 +38,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'magit)
 (eval-when-compile (require 'subr-x))
 
 (defconst magit-pg-command

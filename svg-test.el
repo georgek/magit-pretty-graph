@@ -30,6 +30,7 @@
 
 ;;; Code:
 (require 'svg)
+(require 'magit-pretty-graph)
 
 (defvar svg-test-debug nil)
 
