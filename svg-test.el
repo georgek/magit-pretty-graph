@@ -190,13 +190,8 @@ previous commits that we are still waiting for"
       :outgoing-hashes outgoing-hashes
       :svgs (--map (svg-test-make-svg :blank) incoming-hashes)))))
 
-(defun svg-test-format-hash (hash)
-  (if (vectorp hash)
-      (substring (format "%x" (elt hash 0)) 0 7)
-    (format "%s" hash)))
-
 (defun svg-test-format-hashes (hashes)
-  (mapconcat #'svg-test-format-hash hashes ", "))
+  (mapconcat #'magit-pg-format-hash hashes ", "))
 
 (defun svg-test-apply-edge (svgs i j)
   "Draws edge in this row to connect column i to column j (as a

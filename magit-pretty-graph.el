@@ -42,7 +42,7 @@
 
 (defconst magit-pg-command
   (concat "git --no-pager log --topo-order --decorate=full "
-          "--pretty=format:\"%H%x00%P%x00%h%x00%an%x00%ar%x00%s%x00%d\" "
+          "--pretty=format:\"%H%x00%P%x00%an%x00%ar%x00%s%x00%d\" "
           "-n 100")
   "The command used to fill the raw output buffer.")
 
@@ -281,7 +281,15 @@ nil
    (magit-pg-commit-description commit)))
 
 (cl-defstruct magit-pg-commit
-  hash parent-hashes short-hash author date description decoration)
+  hash parent-hashes author date description decoration)
+
+(defun magit-pg-format-hash (hash)
+  (if (vectorp hash)
+      (substring (format "%x" (elt hash 0)) 0 7)
+    (format "%s" hash)))
+
+(defun magit-pg-commit-short-hash (commit)
+  (magit-pg-format-hash (magit-pg-commit-hash commit)))
 
 (defun magit-pg-parse-commit (line)
   (let ((items (split-string line "\0" nil)))
@@ -289,7 +297,6 @@ nil
      :hash (magit-pg-parse-hash (pop items))
      :parent-hashes (mapcar #'magit-pg-parse-hash
 			    (split-string (pop items) " " t))
-     :short-hash (pop items)
      :author (pop items)
      :date (pop items)
      :description (pop items)
