@@ -30,6 +30,8 @@
 
 ;;; Code:
 
+(defvar svg-test-debug nil)
+
 (defvar svg-test-width 17.0 "Width of SVG blocks")
 (defvar svg-test-height 22.0 "Height of SVG blocks")
 
@@ -159,68 +161,161 @@
   (svg-test-put-svg :ne :commit) (insert " Seven\n"))
 
 (cl-defstruct svg-test-commit-line
-  commit trunk-hashes svgs)
+  commit incoming-hashes outgoing-hashes svgs)
 
-(defun svg-test-make-commit-line (commit trunk-hashes)
-  "Makes the commits (nodes) with no edges"
-  (let ((commit-line (make-svg-test-commit-line
-		      :commit commit
-		      :trunk-hashes (-copy trunk-hashes)
-		      :svgs (--map (svg-test-make-svg :blank) trunk-hashes)))
-	(commit-trunk (-elem-index (magit-pg-commit-hash commit) trunk-hashes)))
-    (unless commit-trunk
-      ;; new head
-      (push (svg-test-make-svg :blank) (svg-test-commit-line-svgs commit-line))
-      (push (magit-pg-commit-hash commit) (svg-test-commit-line-trunk-hashes commit-line))
-      (setq commit-trunk 0))
-    ;; mark this commit
-    (svg-test-add-to-svg (nth commit-trunk (svg-test-commit-line-svgs commit-line))
-			 :commit)
-    ;; update trunks
-    (setf (svg-test-commit-line-trunk-hashes commit-line)
-	  (--splice (eq it (magit-pg-commit-hash commit))
-		    (magit-pg-commit-parent-hashes commit)
-		    (svg-test-commit-line-trunk-hashes commit-line)))
-    (setf (svg-test-commit-line-trunk-hashes commit-line)
-	  (-distinct (svg-test-commit-line-trunk-hashes commit-line)))
-    commit-line))
+(defun svg-test-incoming-to-outgoing-hashes (incoming-hashes commit)
+  (let ((commit-hash (magit-pg-commit-hash commit))
+	(parent-hashes (magit-pg-commit-parent-hashes commit)))
+    (-distinct (--splice-list (equal it commit-hash)
+			      parent-hashes
+			      incoming-hashes))))
+
+(defun svg-test-make-commit-line (commit incoming-hashes)
+  "Make the line for this commit in the context of the incoming
+hashes. The incoming hashes are the hashes of all the parents of
+previous commits that we are still waiting for"
+  (let* ((commit-hash (magit-pg-commit-hash commit))
+	 (commit-index (-elem-index commit-hash incoming-hashes)))
+    (unless commit-index
+      ;; we weren't waiting for this commit, so it must be the head of a
+      ;; branch we haven't seen yet
+      (push commit-hash incoming-hashes)
+      (setq commit-index 0))
+    (let ((outgoing-hashes (svg-test-incoming-to-outgoing-hashes
+			    incoming-hashes commit)))
+     (make-svg-test-commit-line
+      :commit commit
+      :incoming-hashes incoming-hashes
+      :outgoing-hashes outgoing-hashes
+      :svgs (--map (svg-test-make-svg :blank) incoming-hashes)))))
+
+(defun svg-test-format-hash (hash)
+  (if (vectorp hash)
+      (substring (format "%x" (elt hash 0)) 0 7)
+    (format "%s" hash)))
+
+(defun svg-test-format-hashes (hashes)
+  (mapconcat #'svg-test-format-hash hashes ", "))
+
+(defun svg-test-apply-edge (svgs i j)
+  "Draws edge in this row to connect column i to column j (as a
+side effect) and returns the direction of the outgoing edge"
+  ;; FIXME: this will break if difference between i and j is greater than 1
+  ;; (ie. cause by octopus merges, new heads and far away branches)
+  (let ((svg (nth i svgs)))
+   (cond ((= i j)
+	  (svg-test-add-to-svg svg :s)
+	  :n)
+	 ((> i j)
+	  (svg-test-add-to-svg svg :sw)
+	  :ne)
+	 ((< i j)
+	  (svg-test-add-to-svg svg :se)
+	  :nw))))
+
+(defun svg-test-fill-in-commit-line (commit-line incoming-directions)
+  "Fills in the graph for the SVGs in the commit line (as a side
+  effect). The incoming directions list the directions the
+  incoming edges are coming from. Returns the incoming directions
+  for the next line."
+  (let* ((commit (svg-test-commit-line-commit commit-line))
+	 (incoming-hashes (svg-test-commit-line-incoming-hashes commit-line))
+	 (outgoing-hashes (svg-test-commit-line-outgoing-hashes commit-line))
+	 (commit-hash (magit-pg-commit-hash commit))
+	 (commit-index (-elem-index commit-hash incoming-hashes))
+	 (svgs (svg-test-commit-line-svgs commit-line))
+	 (outgoing-directions (make-list (length outgoing-hashes) (list))))
+    ;; draw incoming edges
+    (cl-loop
+     for incoming-direction in incoming-directions
+     for svg in svgs do
+     (apply #'svg-test-add-to-svg svg incoming-direction))
+    ;; draw outgoing edges
+    (cl-loop
+     for incoming-hash in incoming-hashes
+     for i from 0 do
+     (if (equal incoming-hash commit-hash)
+	 ;; connect commit to parents
+	 (let ((parent-hashes (magit-pg-commit-parent-hashes commit)))
+	   (cl-loop
+	    for parent-hash in parent-hashes do
+	    (let ((j (-elem-index parent-hash outgoing-hashes)))
+	      (push (svg-test-apply-edge svgs i j)
+		    (nth j outgoing-directions)))))
+       ;; connect other trunks
+       (let ((j (-elem-index incoming-hash outgoing-hashes)))
+	 (when j
+	   (push (svg-test-apply-edge svgs i j)
+		 (nth j outgoing-directions))))))
+    ;; draw commit
+    (svg-test-add-to-svg (nth commit-index svgs) :commit)
+    outgoing-directions))
 
 (defun svg-test-draw-commit-line (commit-line)
   (dolist (svg (svg-test-commit-line-svgs commit-line))
     (insert-image (svg-image svg)))
   (let ((commit (svg-test-commit-line-commit commit-line)))
     (insert
-     (format " %s %s"
-	     (or (magit-pg-commit-short-hash commit) (magit-pg-commit-hash commit))
-	     (magit-pg-commit-description commit)))))
+     (if svg-test-debug
+	 (format " %s (p: %s) (i: %s) (o: %s)"
+		 (or (magit-pg-commit-short-hash commit) (magit-pg-commit-hash commit))
+		 (svg-test-format-hashes (magit-pg-commit-parent-hashes commit))
+		 (svg-test-format-hashes (svg-test-commit-line-incoming-hashes commit-line))
+		 (svg-test-format-hashes (svg-test-commit-line-outgoing-hashes commit-line)))
+       (format " %s %s"
+	       (or (magit-pg-commit-short-hash commit) (magit-pg-commit-hash commit))
+	       (magit-pg-commit-description commit))))))
 
-(defun svg-test-repo ()
+(defun svg-test-draw-repo (commits)
+  (with-current-buffer (get-buffer-create "*svg-test*")
+    (erase-buffer)
+    (setq truncate-lines t)
+    (let ((current-hashes (list))
+	  (commit-lines (list)))
+      (dolist (commit commits)
+	(push (svg-test-make-commit-line commit current-hashes) commit-lines)
+	;; FIXME: the incoming edges of the new commit might no longer
+	;; match the outgoing edges of the previous commit line. This
+	;; happens in the case of a new head or an octopus merge. If this
+	;; happens the change needs to propagated back up the stack
+	(setq current-hashes (svg-test-commit-line-outgoing-hashes (car commit-lines))))
+      (setq commit-lines (nreverse commit-lines))
+      (let ((current-directions (list)))
+	(dolist (commit-line commit-lines)
+	  (setq current-directions
+		(svg-test-fill-in-commit-line commit-line current-directions))))
+      (dolist (commit-line commit-lines)
+	(svg-test-draw-commit-line commit-line)
+	(insert "\n")))
+    (insert "\n")
+    (pop-to-buffer "*svg-test*")
+    (beginning-of-buffer)))
+
+(defun svg-test-test ()
+  (interactive)
   (let ((commits
 	 (list
 	  (make-magit-pg-commit :hash 1 :description "One" :parent-hashes '(2))
 	  (make-magit-pg-commit :hash 2 :description "Two" :parent-hashes '(3))
-	  (make-magit-pg-commit :hash 3 :description "Three" :parent-hashes '(4 5))
+	  (make-magit-pg-commit :hash 3 :description "Three" :parent-hashes '(5 4))
 	  (make-magit-pg-commit :hash 4 :description "Four" :parent-hashes '(6))
 	  (make-magit-pg-commit :hash 5 :description "Five" :parent-hashes '())
 	  (make-magit-pg-commit :hash 6 :description "Six" :parent-hashes '(7))
 	  (make-magit-pg-commit :hash 7 :description "Seven" :parent-hashes '()))))
-    (with-current-buffer (get-buffer-create "*svg-test*")
-      (erase-buffer)
-      (svg-test-make-graph)
-      (insert "\n\n")
-      (setq truncate-lines t)
-      (let ((trunk-hashes (list))
-	    (commit-lines (list)))
-	(dolist (commit commits)
-	    (push (svg-test-make-commit-line commit trunk-hashes) commit-lines)
-	    (setq trunk-hashes (svg-test-commit-line-trunk-hashes (car commit-lines))))
-	(setq commit-lines (nreverse commit-lines))
-	(dolist (commit-line commit-lines)
-	  (svg-test-draw-commit-line commit-line)
-	  (insert "\n")))
-      (insert "\n")
-      (pop-to-buffer "*svg-test*")
-      (end-of-buffer))))
+    (svg-test-draw-repo commits)))
+
+(defun svg-test-repo (&optional directory)
+  (interactive
+   (list (read-directory-name "Repository: ")))
+  (with-current-buffer (get-buffer-create magit-pg-output-buffer-name)
+    (erase-buffer)
+    (cd (or directory default-directory))
+    (call-process-shell-command
+     magit-pg-command
+     nil
+     magit-pg-output-buffer-name)
+    (let ((commits (magit-pg-parse-output magit-pg-output-buffer-name)))
+      (svg-test-draw-repo commits))))
 
 (provide 'svg-test)
 

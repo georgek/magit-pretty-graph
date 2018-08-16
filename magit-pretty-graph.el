@@ -1,4 +1,4 @@
-;;; -*-coding: utf-8 -*-
+;;; -*-coding: utf-8; lexical-binding: t -*-
 ;;; magit-pretty-graph.el --- a pretty git graph drawn with Emacs lisp
 
 ;; Copyright (C) 2013  George Kettleborough
@@ -40,9 +40,9 @@
 (require 'cl-lib)
 
 (defconst magit-pg-command
-  (concat "git --no-pager log --date-order --decorate=full "
+  (concat "git --no-pager log --topo-order --decorate=full "
           "--pretty=format:\"%H%x00%P%x00%h%x00%an%x00%ar%x00%s%x00%d\" "
-          "--all -n 100")
+          "-n 100")
   "The command used to fill the raw output buffer.")
 
 (defconst magit-pg-buffer-name "*magit-prettier-graph*"
